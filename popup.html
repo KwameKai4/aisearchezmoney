@@ -54,11 +54,17 @@
           </select>
           <small class="input-help">Only free models can be used with this extension</small>
         </div>
-        <div class="input-group setting-row">
-          <label for="urlContextToggle">Use URL context:</label>
-          <div class="toggle-wrapper">
-            <input type="checkbox" id="urlContextToggle" checked>
-            <span class="toggle-label">Include current page information</span>
+        <div class="input-group">
+          <label>Query Mode:</label>
+          <div class="mode-buttons">
+            <button id="basicModeBtn" class="mode-button">
+              <span class="material-icons">chat</span>
+              Basic Query
+            </button>
+            <button id="urlModeBtn" class="mode-button active">
+              <span class="material-icons">article</span>
+              URL Context
+            </button>
           </div>
         </div>
         <div class="input-group setting-row">
