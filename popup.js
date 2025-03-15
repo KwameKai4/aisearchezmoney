@@ -40,6 +40,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isUseUrlContext = true; // Default to true for URL context
   let availableElevenLabsVoices = [];
   let isPlaying = false;
+
+  // Mode selection buttons
+  const basicModeBtn = document.getElementById('basicModeBtn');
+  const urlModeBtn = document.getElementById('urlModeBtn');
+
+  // Handle mode selection
+  basicModeBtn.addEventListener('click', () => {
+    isUseUrlContext = false;
+    basicModeBtn.classList.add('active');
+    urlModeBtn.classList.remove('active');
+    chrome.storage.sync.set({ useUrlContext: false });
+  });
+
+  urlModeBtn.addEventListener('click', () => {
+    isUseUrlContext = true;
+    urlModeBtn.classList.add('active');
+    basicModeBtn.classList.remove('active');
+    chrome.storage.sync.set({ useUrlContext: true });
+  });
   
   // Define models - comprehensive list of free and paid models
   const freeModels = [
@@ -542,8 +561,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set URL context toggle if saved
     if (data.useUrlContext !== undefined) {
       isUseUrlContext = data.useUrlContext;
-      if (document.getElementById('urlContextToggle')) {
-        document.getElementById('urlContextToggle').checked = isUseUrlContext;
+      if (isUseUrlContext) {
+        urlModeBtn.classList.add('active');
+        basicModeBtn.classList.remove('active');
+      } else {
+        basicModeBtn.classList.add('active');
+        urlModeBtn.classList.remove('active');
       }
     }
     
