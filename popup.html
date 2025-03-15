@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Search Assistant</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>AI Search Assistant</h2>
+      <div class="header-icons">
+        <span id="urlContextIndicator" class="url-indicator hidden" title="Current page context"></span>
+        <button id="analyzePageBtn" class="icon-button" title="Analyze current page">
+          <span class="material-icons">article</span>
+        </button>
+        <button id="settingsBtn" class="icon-button" title="Settings">
+          <span class="material-icons">settings</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div class="quick-actions">
+      <button id="summarizeBtn" class="quick-action-btn">
+        <span class="material-icons">summarize</span>
+        Summarize Page
+      </button>
+      <button id="keyPointsBtn" class="quick-action-btn">
+        <span class="material-icons">format_list_bulleted</span>
+        Key Points
+      </button>
+    </div>
+
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-tabs">
+        <button class="tab-btn active" data-tab="general">General</button>
+        <button class="tab-btn" data-tab="voice">Voice</button>
+      </div>
+      
+      <div id="generalTab" class="tab-content active">
+        <div class="input-group">
+          <label for="apiKey">OpenRouter API Key:</label>
+          <input type="password" id="apiKey" placeholder="Enter your API key" spellcheck="false">
+          <small class="input-help">Get your free API key at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></small>
+        </div>
+        <div class="input-group">
+          <label for="model">Model:</label>
+          <select id="model">
+            <!-- Models will be populated dynamically based on API key presence -->
+          </select>
+          <small class="input-help">Only free models can be used with this extension</small>
+        </div>
+        <div class="input-group setting-row">
+          <label for="urlContextToggle">Use URL context:</label>
+          <div class="toggle-wrapper">
+            <input type="checkbox" id="urlContextToggle" checked>
+            <span class="toggle-label">Include current page information</span>
+          </div>
+        </div>
+        <div class="input-group setting-row">
+          <label for="temperature">Response creativity:</label>
+          <div class="slider-container">
+            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+            <span id="temperatureValue">0.7</span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="voiceTab" class="tab-content">
+        <div class="input-group">
+          <label for="elevenLabsKey">ElevenLabs API Key:</label>
+          <input type="password" id="elevenLabsKey" placeholder="Enter your ElevenLabs API key" spellcheck="false">
+          <small class="input-help">Get a key at <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></small>
+        </div>
+        <div class="input-group">
+          <label for="elevenLabsVoice">Select Voice:</label>
+          <select id="elevenLabsVoice">
+            <option value="" disabled selected>Select a voice</option>
+            <!-- Voices will be populated when API key is provided -->
+          </select>
+        </div>
+        <div class="input-group setting-row">
+          <label for="useElevenLabs">Use ElevenLabs TTS:</label>
+          <div class="toggle-wrapper">
+            <input type="checkbox" id="useElevenLabs">
+            <span class="toggle-label">Enable premium voices</span>
+          </div>
+        </div>
+        <button id="testVoiceBtn" class="secondary-btn">
+          <span class="material-icons">record_voice_over</span>
+          Test Voice
+        </button>
+      </div>
+      
+      <button id="saveSettings">
+        <span class="material-icons">save</span>
+        Save Settings
+      </button>
+    </div>
+
+    <div class="search-section">
+      <div class="input-group">
+        <textarea id="searchInput" placeholder="Enter your question..." rows="3" autofocus></textarea>
+      </div>
+      <button id="searchBtn">
+        <span class="material-icons">search</span>
+        Search
+      </button>
+    </div>
+
+    <div id="resultContainer" class="result-container">
+      <div id="result" class="result"></div>
+      <div class="result-actions">
+        <button id="copyBtn" class="action-button hidden">
+          <span class="material-icons">content_copy</span> Copy
+        </button>
+        <button id="downloadBtn" class="action-button hidden">
+          <span class="material-icons">download</span> Download
+        </button>
+        <button id="speakBtn" class="action-button hidden">
+          <span class="material-icons">volume_up</span> Speak
+        </button>
+        <button id="shareBtn" class="action-button hidden">
+          <span class="material-icons">share</span> Share
+        </button>
+      </div>
+    </div>
+
+    <div id="message" class="message"></div>
+    <audio id="audioPlayer" style="display:none;"></audio>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
