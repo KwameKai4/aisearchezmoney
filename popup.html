@@ -104,12 +104,23 @@
 
     <div class="search-section">
       <div class="input-group">
-        <textarea id="searchInput" placeholder="Enter your question..." rows="3" autofocus></textarea>
+        <div class="search-input-container">
+          <textarea id="searchInput" placeholder="Enter your question..." rows="3" autofocus></textarea>
+          <button id="voiceInputBtn" class="voice-input-btn" title="Voice Input">
+            <span class="material-icons">mic</span>
+          </button>
+        </div>
       </div>
-      <button id="searchBtn">
-        <span class="material-icons">search</span>
-        Search
-      </button>
+      <div class="button-group">
+        <button id="searchBtn">
+          <span class="material-icons">search</span>
+          Search
+        </button>
+        <button id="resetBtn" class="reset-btn">
+          <span class="material-icons">refresh</span>
+          Reset
+        </button>
+      </div>
     </div>
 
     <div id="resultContainer" class="result-container">

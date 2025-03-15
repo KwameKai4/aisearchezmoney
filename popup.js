@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // UI Elements
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
   const apiKeyInput = document.getElementById('apiKey');
@@ -6,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveSettingsBtn = document.getElementById('saveSettings');
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
+  const voiceInputBtn = document.getElementById('voiceInputBtn');
+  const resetBtn = document.getElementById('resetBtn');
   const resultContainer = document.getElementById('resultContainer');
   const result = document.getElementById('result');
   const copyBtn = document.getElementById('copyBtn');
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // API request function (reused for both search and analysis)
   async function makeApiRequest(prompt, apiKey, modelId, temperature = 0.7) {
     try {
-      // Build messages array
+      // Build messages array with conversation history
       let messages = [];
       
       // Add system message based on the type of request
@@ -294,18 +297,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         messages.push({
           role: 'system',
-          content: 'You are a helpful assistant. Provide concise, direct answers without unnecessary explanations. Be fast and straight to the point.'
+          content: 'You are a helpful assistant that maintains context from previous messages. Reference and build upon previous conversations when relevant. Be clear and direct while maintaining continuity.'
         });
       }
       
-      // Add user message
-      messages.push({
-        role: 'user',
-        content: prompt
-      });
+      // Add conversation history (up to last 5 exchanges) before the new prompt
+      const recentHistory = conversationHistory.slice(-10);
+      messages = messages.concat(recentHistory);
       
-      // Track in conversation history
-      conversationHistory.push({
+      // Add current user message
+      messages.push({
         role: 'user',
         content: prompt
       });
@@ -351,6 +352,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.result-actions button').forEach(btn => {
           btn.classList.remove('hidden');
         });
+        
+        // Add or update context indicator
+        if (conversationHistory.length > 2) {
+          let contextIndicator = document.querySelector('.context-active');
+          if (!contextIndicator) {
+            contextIndicator = document.createElement('div');
+            contextIndicator.className = 'context-active';
+            contextIndicator.innerHTML = `
+              <span class="material-icons">history</span>
+              <span class="context-text">Conversation context active</span>
+            `;
+            result.parentNode.insertBefore(contextIndicator, result);
+          }
+        }
         
         // Add model info to the result
         const usedModel = responseData.model || modelId;
@@ -945,4 +960,121 @@ document.addEventListener('DOMContentLoaded', async () => {
       messageDiv.className = 'message';
     }, 3000);
   }
+
+  // Voice input functionality
+  let recognition;
+  let isRecording = false;
+
+  function initializeVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      voiceInputBtn.style.display = 'none';
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isRecording = true;
+      voiceInputBtn.classList.add('recording');
+      voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+      showMessage('Listening...', 'success');
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+      voiceInputBtn.classList.remove('recording');
+      voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
+
+      searchInput.value = transcript;
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      isRecording = false;
+      voiceInputBtn.classList.remove('recording');
+      voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+      
+      let errorMessage = 'An error occurred with voice recognition';
+      
+      switch (event.error) {
+        case 'not-allowed':
+          errorMessage = 'Please allow microphone access to use voice input';
+          break;
+        case 'no-speech':
+          errorMessage = 'No speech was detected. Please try again.';
+          break;
+        case 'network':
+          errorMessage = 'Network error occurred. Please check your connection.';
+          break;
+        case 'audio-capture':
+          errorMessage = 'No microphone was found. Please check your device settings.';
+          break;
+        default:
+          errorMessage = `Error: ${event.error}`;
+      }
+      
+      showMessage(errorMessage, 'error');
+    };
+  }
+
+  // Initialize voice recognition
+  initializeVoiceRecognition();
+
+  // Voice input button click handler
+  voiceInputBtn.addEventListener('click', () => {
+    if (!recognition) {
+      showMessage('Speech recognition is not supported in your browser', 'error');
+      return;
+    }
+
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      searchInput.value = ''; // Clear existing input
+      recognition.start();
+    }
+  });
+
+  // Reset button click handler
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    // Stop voice recognition if active
+    if (isRecording && recognition) {
+      recognition.stop();
+    }
+    
+    // Clear input
+    searchInput.value = '';
+    
+    // Clear results
+    result.innerHTML = '';
+    resultContainer.style.display = 'none';
+    
+    // Hide all action buttons
+    document.querySelectorAll('.result-actions button').forEach(btn => {
+      btn.classList.add('hidden');
+    });
+    
+    // Reset current response, query and conversation history
+    currentResponse = '';
+    currentQuery = '';
+    conversationHistory = [];
+    
+    // Remove context indicator if it exists
+    const contextIndicator = document.querySelector('.context-active');
+    if (contextIndicator) {
+      contextIndicator.remove();
+    }
+    
+    showMessage('Conversation and results cleared', 'success');
+  });
 });
