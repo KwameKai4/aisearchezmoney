@@ -7,103 +7,116 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <button id="settingsBtn" class="icon-button" title="Settings">
-        <span class="material-icons">settings</span>
-      </button>
-      <div class="mode-selector">
-        <button id="basicModeBtn" class="mode-btn">Basic</button>
-        <button id="urlModeBtn" class="mode-btn active">URL Context</button>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Chats</h2>
+        <button id="newChatBtn" class="icon-button" title="New Chat">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+      <div class="chat-list" id="chatList">
+        <!-- Chat items will be added here dynamically -->
       </div>
     </div>
-    
-    <div id="urlContextIndicator" class="url-indicator hidden"></div>
-
-    <div class="main-content">
-      <div class="search-container">
-        <textarea id="searchInput" placeholder="Ask anything..."></textarea>
-        <div class="button-group">
-          <button id="voiceInputBtn" class="icon-button" title="Voice Input">
-            <span class="material-icons">mic</span>
-          </button>
-          <button id="searchBtn" class="primary-button">
-            <span class="material-icons">search</span>
-            Search
-          </button>
-        </div>
-      </div>
-
-      <div class="analysis-buttons">
-        <button id="analyzePageBtn" class="analysis-btn">
-          <span class="material-icons">article</span>
-          Analyze
+    <div class="main-wrapper">
+      <div class="header">
+        <button id="settingsBtn" class="icon-button" title="Settings">
+          <span class="material-icons">settings</span>
         </button>
-        <button id="summarizeBtn" class="analysis-btn">
-          <span class="material-icons">summarize</span>
-          Summarize
-        </button>
-        <button id="keyPointsBtn" class="analysis-btn">
-          <span class="material-icons">format_list_bulleted</span>
-          Key Points
-        </button>
-      </div>
-
-      <div id="resultContainer" class="result-container hidden">
-        <div id="result" class="result"></div>
-        <div class="result-actions">
-          <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
-            <span class="material-icons">content_copy</span>
-          </button>
-          <button id="downloadBtn" class="icon-button" title="Download">
-            <span class="material-icons">download</span>
-          </button>
-          <button id="shareBtn" class="icon-button" title="Share">
-            <span class="material-icons">share</span>
-          </button>
-          <button id="resetBtn" class="icon-button" title="Reset">
-            <span class="material-icons">refresh</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="settingsPanel" class="settings-panel hidden">
-      <div class="settings-header">
-        <h2>Settings</h2>
-        <div class="tab-buttons">
-          <button class="tab-btn active" data-tab="general">General</button>
-          <button class="tab-btn" data-tab="models">Models</button>
+        <div class="mode-selector">
+          <button id="basicModeBtn" class="mode-btn">Basic</button>
+          <button id="urlModeBtn" class="mode-btn active">URL Context</button>
         </div>
       </div>
       
-      <div id="generalTab" class="tab-content active">
-        <div class="form-group">
-          <label for="apiKey">OpenRouter API Key</label>
-          <input type="password" id="apiKey" placeholder="Enter your API key">
-          <div class="api-key-validation"></div>
+      <div id="urlContextIndicator" class="url-indicator hidden"></div>
+
+      <div class="main-content">
+        <div class="search-container">
+          <textarea id="searchInput" placeholder="Ask anything..."></textarea>
+          <div class="button-group">
+            <button id="voiceInputBtn" class="icon-button" title="Voice Input">
+              <span class="material-icons">mic</span>
+            </button>
+            <button id="searchBtn" class="primary-button">
+              <span class="material-icons">search</span>
+              Search
+            </button>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="temperature">Response Creativity</label>
-          <div class="slider-container">
-            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
-            <span id="temperatureValue">0.7</span>
+
+        <div class="analysis-buttons">
+          <button id="analyzePageBtn" class="analysis-btn">
+            <span class="material-icons">article</span>
+            Analyze
+          </button>
+          <button id="summarizeBtn" class="analysis-btn">
+            <span class="material-icons">summarize</span>
+            Summarize
+          </button>
+          <button id="keyPointsBtn" class="analysis-btn">
+            <span class="material-icons">format_list_bulleted</span>
+            Key Points
+          </button>
+        </div>
+
+        <div id="resultContainer" class="result-container hidden">
+          <div id="result" class="result"></div>
+          <div class="result-actions">
+            <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
+              <span class="material-icons">content_copy</span>
+            </button>
+            <button id="downloadBtn" class="icon-button" title="Download">
+              <span class="material-icons">download</span>
+            </button>
+            <button id="shareBtn" class="icon-button" title="Share">
+              <span class="material-icons">share</span>
+            </button>
+            <button id="resetBtn" class="icon-button" title="Reset">
+              <span class="material-icons">refresh</span>
+            </button>
           </div>
         </div>
       </div>
-      
-      <div id="modelsTab" class="tab-content">
-        <div class="form-group">
-          <label for="model">Model Selection</label>
-          <select id="model">
-            <option value="" disabled selected>Enter API key to see models</option>
-          </select>
+
+      <div id="settingsPanel" class="settings-panel hidden">
+        <div class="settings-header">
+          <h2>Settings</h2>
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="general">General</button>
+            <button class="tab-btn" data-tab="models">Models</button>
+          </div>
         </div>
+        
+        <div id="generalTab" class="tab-content active">
+          <div class="form-group">
+            <label for="apiKey">OpenRouter API Key</label>
+            <input type="password" id="apiKey" placeholder="Enter your API key">
+            <div class="api-key-validation"></div>
+          </div>
+          <div class="form-group">
+            <label for="temperature">Response Creativity</label>
+            <div class="slider-container">
+              <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+              <span id="temperatureValue">0.7</span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="modelsTab" class="tab-content">
+          <div class="form-group">
+            <label for="model">Model Selection</label>
+            <select id="model">
+              <option value="" disabled selected>Enter API key to see models</option>
+            </select>
+          </div>
+        </div>
+        
+        <button id="saveSettings" class="primary-button">
+          <span class="material-icons">save</span>
+          Save Settings
+        </button>
       </div>
-      
-      <button id="saveSettings" class="primary-button">
-        <span class="material-icons">save</span>
-        Save Settings
-      </button>
     </div>
   </div>
 
