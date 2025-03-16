@@ -184,7 +184,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Toggle settings panel
-  settingsBtn.addEventListener('click', () => {
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Stop event from propagating to document
     settingsPanel.classList.toggle('hidden');
   });
 
@@ -608,21 +609,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     recognition.start();
   });
 
-  // Analysis buttons with direct commands
+  // Analysis buttons with direct commands - modified to work even without full content
   analyzePageBtn.addEventListener('click', async () => {
     const context = await getCurrentPageContext();
     
     if (!context) {
+      // If we can't get any context at all, show error and exit
       showMessage('No page context available to analyze', 'error');
       return;
     }
     
-    if (!context.content) {
-      showMessage('Page content is not accessible. Try refreshing the page.', 'warning');
-      return;
-    }
-    
-    // Send a direct command instead of constructing a query
+    // Always proceed, even if content is null
     sendCommand('Analyze this page in detail and explain the main topics covered', context);
   });
   
@@ -630,16 +627,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const context = await getCurrentPageContext();
     
     if (!context) {
+      // If we can't get any context at all, show error and exit
       showMessage('No page context available to summarize', 'error');
       return;
     }
     
-    if (!context.content) {
-      showMessage('Page content is not accessible. Try refreshing the page.', 'warning');
-      return;
-    }
-    
-    // Send a direct command instead of constructing a query
+    // Always proceed, even if content is null
     sendCommand('Provide a concise summary of this page', context);
   });
   
@@ -647,16 +640,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const context = await getCurrentPageContext();
     
     if (!context) {
+      // If we can't get any context at all, show error and exit
       showMessage('No page context available to extract key points', 'error');
       return;
     }
     
-    if (!context.content) {
-      showMessage('Page content is not accessible. Try refreshing the page.', 'warning');
-      return;
-    }
-    
-    // Send a direct command instead of constructing a query
+    // Always proceed, even if content is null
     sendCommand('List the key points from this page as bullet points', context);
   });
 

@@ -260,7 +260,7 @@ body {
   padding: 1rem;
   box-sizing: border-box;
   z-index: 1000;
-  transform: translateX(100%);
+  transform: translateX(0);
   transition: transform 0.3s ease;
 }
 
@@ -268,9 +268,9 @@ body {
   transform: translateX(100%);
 }
 
-.settings-panel:not(.hidden) {
-  transform: translateX(0);
-  animation: slideIn 0.3s ease;
+@keyframes slideIn {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(0); }
 }
 
 .settings-header {
@@ -444,19 +444,24 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .url-indicator {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background-color: var(--primary-color-light);
-  color: white;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+  font-size: 0.85rem;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-top: 0.25rem;
+}
+
+.url-indicator::before {
+  content: "📄";
+  margin-right: 0.5rem;
 }
 
 .recording .material-icons {
