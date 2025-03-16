@@ -1,127 +1,159 @@
-# AI Search Assistant Chrome Extension 🔍
+# AI Search Assistant Chrome Extension
 
-A powerful Chrome extension that combines AI-powered search, voice input, and contextual conversation capabilities using state-of-the-art language models.
+A Chrome extension that provides AI-powered search and analysis capabilities with URL context support, subscription management, and usage tracking.
 
-![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)
+## Features
 
-## ✨ Features
+- AI-powered search with GPT and other language models
+- URL context support for page-specific queries
+- Voice input and text-to-speech output
+- Premium subscription management
+- Usage tracking and rate limiting
+- Multiple model support (free and paid options)
+- ElevenLabs integration for high-quality TTS
 
-### 🤖 Advanced AI Integration
-- Access to multiple free and premium AI models through OpenRouter
-- Support for latest models including GPT-4, Claude 3, Gemini, and more
-- Smart context retention for natural conversations
-- Temperature control for response creativity
+## Setup Instructions
 
-### 🎙️ Voice Capabilities
-- Voice input with real-time speech recognition
-- Premium text-to-speech with ElevenLabs integration
-- Fallback to high-quality browser speech synthesis
-- Voice command support for hands-free operation
+### Prerequisites
 
-### 🌐 Web Page Analysis
-- One-click page summarization
-- Key points extraction
-- Comprehensive content analysis
-- URL context awareness for relevant responses
+1. Node.js (v14 or higher)
+2. Chrome browser
+3. Supabase account
+4. Stripe account (for payments)
+5. OpenRouter API key
+6. ElevenLabs API key (optional)
 
-### 💫 Modern User Interface
-- Clean, responsive design with animations
-- Dark theme optimized for readability
-- Context-aware indicators
-- Quick action buttons for common tasks
+### Environment Setup
 
-### 🛠️ Utility Features
-- Copy responses to clipboard
-- Download conversations as text files
-- Share results via system share sheet
-- Reset functionality for fresh starts
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/ai-search-assistant.git
+cd ai-search-assistant
+```
 
-## 🚀 Installation
+2. Install dependencies
+```bash
+npm install
+```
 
-1. Download or clone this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top right
-4. Click "Load unpacked" and select the extension directory
-5. The extension icon will appear in your browser toolbar
+3. Copy `.env.example` to `.env`
+```bash
+cp .env.example .env
+```
 
-## ⚙️ Setup
+4. Configure environment variables in `.env`:
+```plaintext
+# Supabase Configuration
+SUPABASE_URL="your-supabase-project-url"
+SUPABASE_ANON_KEY="your-supabase-anon-key"
+SUPABASE_JWT_SECRET="your-jwt-secret"
 
-1. Click the extension icon to open the interface
-2. Go to Settings (gear icon)
-3. Enter your OpenRouter API key
-   - Get a free key at [openrouter.ai](https://openrouter.ai)
-4. (Optional) Configure ElevenLabs for premium voice
-   - Get an API key at [elevenlabs.io](https://elevenlabs.io)
-5. Select your preferred AI model
-6. Adjust temperature and other settings as needed
+# Stripe Configuration
+STRIPE_SECRET_KEY="your-stripe-secret-key"
+STRIPE_PUBLISHABLE_KEY="your-stripe-publishable-key"
+STRIPE_WEBHOOK_SECRET="your-stripe-webhook-secret"
+STRIPE_PRICE_ID_PRO="your-stripe-price-id"
 
-## 🎯 Usage
+# OAuth Configuration
+OAUTH_CLIENT_ID="your-oauth-client-id"
+OAUTH_CLIENT_SECRET="your-oauth-client-secret"
+```
 
-### Basic Search
-1. Click the extension icon
-2. Type your question or use voice input
-3. Click "Search" or press Enter
-4. View AI-generated response
-5. Use action buttons to copy, download, speak, or share
+Note: OpenRouter and ElevenLabs API keys are managed through the extension's settings panel and stored securely in the browser's storage, not in environment variables.
 
-### Web Page Analysis
-1. Navigate to any webpage
-2. Open the extension
-3. Use quick action buttons:
-   - 📝 Analyze Page
-   - 📋 Summarize
-   - 📌 Key Points
+### Database Setup
 
-### Voice Input
-1. Click the microphone icon
-2. Allow microphone access when prompted
-3. Speak your question
-4. The text will appear automatically
-5. Click Search to get response
+1. Create a new Supabase project
 
-### Conversation Context
-- The AI remembers previous exchanges
-- Blue indicator shows active context
-- Use Reset button to clear history
-- Reference previous topics naturally
+2. Run the database schema:
+   - Navigate to the SQL editor in your Supabase dashboard
+   - Copy the contents of `schema.sql`
+   - Run the SQL commands to create tables and functions
 
-## 🔒 Privacy & Security
+3. Configure Row Level Security (RLS):
+   - The schema includes RLS policies
+   - Verify policies are active in Supabase dashboard
 
-- All API keys are stored locally in Chrome storage
-- No data is stored on external servers
-- Page content is processed locally before API requests
-- Voice recognition uses secure browser APIs
+### Stripe Setup
 
-## 🛠️ Technical Details
+1. Create a Stripe account and get your API keys
 
-### Technologies Used
-- Chrome Extensions API
-- Web Speech API
-- OpenRouter API
-- ElevenLabs API
-- Modern JavaScript (ES6+)
+2. Create subscription products:
+   - Create a "Pro" subscription product
+   - Set up pricing and features
+   - Copy the price ID to your `.env` file
 
-### Browser Support
-- Chrome 88+
-- Edge 88+ (Chromium-based)
-- Other Chromium browsers (latest versions)
+3. Configure webhooks:
+   - Set up webhook endpoint in Stripe dashboard
+   - Add webhook secret to `.env`
 
-## 📝 License
+### Extension Installation
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+1. Build the extension:
+```bash
+npm run build
+```
 
-## 🤝 Contributing
+2. Load in Chrome:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist` directory
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Usage
 
-## 🙏 Acknowledgments
+1. Click the extension icon to open the popup
+2. Choose between basic query or URL context mode
+3. Enter your question or use voice input
+4. View results and use available actions:
+   - Copy response
+   - Download as text
+   - Text-to-speech playback
+   - Share results
 
-- OpenRouter for AI model access
-- ElevenLabs for premium voice capabilities
-- Chrome Extensions community
-- Contributors and testers
+## Development
 
----
+### Running locally
 
-Made with ❤️ by [Your Name/Organization]
+1. Start development server:
+```bash
+npm run dev
+```
+
+2. Make changes to source files
+3. Extension will automatically reload
+
+### Testing
+
+```bash
+npm test
+```
+
+### Building for production
+
+```bash
+npm run build
+```
+
+## Security
+
+- All API keys are stored securely
+- Environment variables are not exposed to client
+- Row Level Security ensures data privacy
+- Rate limiting prevents abuse
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details
+
+## Support
+
+For support, email support@example.com or create an issue in the repository.
