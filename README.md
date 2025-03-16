@@ -2,7 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blueviolet)](https://chrome.google.com/webstore/detail/ai-search-assistant/abcdefghijklmnopqrstuvwxyz)
-
+[![Home Page](pic1.png)
+[![Settings Page](pic2.png)
+[![Model Page](pic3.png)
 A powerful and privacy-focused Chrome extension that brings AI-driven search capabilities to your browser, making it the ultimate tool for efficient and accurate information gathering. AI Search Assistant stands out from the competition by prioritizing user privacy, offering unparalleled customization, and providing a seamless, intuitive user experience.
 
 ## 🚀 Why Choose AI Search Assistant?
