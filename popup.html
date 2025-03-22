@@ -8,15 +8,26 @@
 <body>
   <div class="container">
     <nav class="breadcrumb">
-      <div class="breadcrumb-item">
-        <span class="breadcrumb-icon material-icons">home</span>
-        <span>AI Assistant</span>
+      <div class="breadcrumb-left">
+        <div class="breadcrumb-item">
+          <span class="breadcrumb-icon material-icons">home</span>
+          <span>AI Assistant</span>
+        </div>
+        <div class="breadcrumb-item" id="currentContext">
+          <span>Chat</span>
+        </div>
+        <div class="breadcrumb-item active" id="currentAction">
+          <span>New Conversation</span>
+        </div>
       </div>
-      <div class="breadcrumb-item" id="currentContext">
-        <span>Chat</span>
-      </div>
-      <div class="breadcrumb-item active" id="currentAction">
-        <span>New Conversation</span>
+      <div class="breadcrumb-right">
+        <div class="mode-selector">
+          <button id="basicModeBtn" class="mode-btn">Basic</button>
+          <button id="urlModeBtn" class="mode-btn active">URL Context</button>
+        </div>
+        <button id="settingsBtn" class="icon-button" title="Settings">
+          <span class="material-icons">settings</span>
+        </button>
       </div>
     </nav>
 
@@ -35,55 +46,26 @@
     </aside>
 
     <main class="main-wrapper">
-      <header class="header">
-        <div class="button-wrapper">
-          <button id="settingsBtn" class="icon-button" title="Settings">
-            <span class="material-icons">settings</span>
-          </button>
-        </div>
-        <div class="mode-selector">
-          <div class="button-wrapper">
-            <button id="basicModeBtn" class="mode-btn">Basic</button>
-          </div>
-          <div class="button-wrapper">
-            <button id="urlModeBtn" class="mode-btn active">URL Context</button>
-          </div>
-        </div>
-      </header>
-      
       <div id="urlContextIndicator" class="url-indicator hidden"></div>
 
       <div class="search-container">
         <textarea id="searchInput" class="search-input" placeholder="Ask anything..." rows="3"></textarea>
-        <div class="button-group">
-          <div class="button-wrapper">
-            <button id="voiceInputBtn" class="icon-button" title="Voice Input">
-              <span class="material-icons">mic</span>
-            </button>
-          </div>
-          <div class="button-wrapper">
-            <button id="searchBtn" class="primary-button">
-              <span class="material-icons">search</span>
-              Search
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="analysis-buttons">
-        <div class="button-wrapper">
+        <div class="button-row">
+          <button id="voiceInputBtn" class="icon-button" title="Voice Input">
+            <span class="material-icons">mic</span>
+          </button>
+          <button id="searchBtn" class="primary-button">
+            <span class="material-icons">search</span>
+            Search
+          </button>
           <button id="analyzePageBtn" class="analysis-btn">
             <span class="material-icons">article</span>
             Analyze
           </button>
-        </div>
-        <div class="button-wrapper">
           <button id="summarizeBtn" class="analysis-btn">
             <span class="material-icons">summarize</span>
             Summarize
           </button>
-        </div>
-        <div class="button-wrapper">
           <button id="keyPointsBtn" class="analysis-btn">
             <span class="material-icons">format_list_bulleted</span>
             Key Points
@@ -94,26 +76,18 @@
       <div id="resultContainer" class="result-container hidden">
         <div id="result" class="result"></div>
         <div class="result-actions">
-          <div class="button-wrapper">
-            <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
-              <span class="material-icons">content_copy</span>
-            </button>
-          </div>
-          <div class="button-wrapper">
-            <button id="downloadBtn" class="icon-button" title="Download">
-              <span class="material-icons">download</span>
-            </button>
-          </div>
-          <div class="button-wrapper">
-            <button id="shareBtn" class="icon-button" title="Share">
-              <span class="material-icons">share</span>
-            </button>
-          </div>
-          <div class="button-wrapper">
-            <button id="resetBtn" class="icon-button" title="Reset">
-              <span class="material-icons">refresh</span>
-            </button>
-          </div>
+          <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
+            <span class="material-icons">content_copy</span>
+          </button>
+          <button id="downloadBtn" class="icon-button" title="Download">
+            <span class="material-icons">download</span>
+          </button>
+          <button id="shareBtn" class="icon-button" title="Share">
+            <span class="material-icons">share</span>
+          </button>
+          <button id="resetBtn" class="icon-button" title="Reset">
+            <span class="material-icons">refresh</span>
+          </button>
         </div>
       </div>
     </main>
@@ -122,15 +96,9 @@
       <div class="settings-header">
         <h2>Settings</h2>
         <div class="tab-buttons">
-          <div class="button-wrapper">
-            <button class="tab-btn active" data-tab="general">General</button>
-          </div>
-          <div class="button-wrapper">
-            <button class="tab-btn" data-tab="personality">Personality</button>
-          </div>
-          <div class="button-wrapper">
-            <button class="tab-btn" data-tab="models">Models</button>
-          </div>
+          <button class="tab-btn active" data-tab="general">General</button>
+          <button class="tab-btn" data-tab="personality">Personality</button>
+          <button class="tab-btn" data-tab="models">Models</button>
         </div>
       </div>
       
@@ -182,12 +150,10 @@
       </div>
       
       <div class="settings-footer">
-        <div class="button-wrapper">
-          <button id="saveSettings" class="primary-button">
-            <span class="material-icons">save</span>
-            Save Settings
-          </button>
-        </div>
+        <button id="saveSettings" class="primary-button">
+          <span class="material-icons">save</span>
+          Save Settings
+        </button>
       </div>
     </div>
   </div>

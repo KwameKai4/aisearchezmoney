@@ -89,11 +89,23 @@ body {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 1.5rem;
   background: var(--surface-color);
   border-bottom: 1px solid var(--border-color);
   font-size: 0.875rem;
+}
+
+.breadcrumb-left {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+}
+
+.breadcrumb-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .breadcrumb-item {
@@ -526,6 +538,30 @@ body {
 .message.info {
   background: var(--info-color);
   color: white;
+}
+
+/* Button Row */
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+/* Ensure buttons take appropriate space */
+.button-row .icon-button {
+  flex-shrink: 0;
+}
+
+.button-row .primary-button {
+  flex-shrink: 0;
+}
+
+.button-row .analysis-btn {
+  flex-shrink: 0;
 }
 
 /* Dark Mode */
