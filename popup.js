@@ -1071,6 +1071,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentQuery = query;
     const context = await getCurrentPageContext();
     sendQuery(query, context);
+    
+    // Clear the search input field after search
+    searchInput.value = '';
   });
 
   // Handle Enter key in search input
