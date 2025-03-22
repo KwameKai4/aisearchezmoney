@@ -7,120 +7,193 @@
 </head>
 <body>
   <div class="container">
-    <div class="sidebar">
+    <nav class="breadcrumb">
+      <div class="breadcrumb-item">
+        <span class="breadcrumb-icon material-icons">home</span>
+        <span>AI Assistant</span>
+      </div>
+      <div class="breadcrumb-item" id="currentContext">
+        <span>Chat</span>
+      </div>
+      <div class="breadcrumb-item active" id="currentAction">
+        <span>New Conversation</span>
+      </div>
+    </nav>
+
+    <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Chats</h2>
-        <button id="newChatBtn" class="icon-button" title="New Chat">
-          <span class="material-icons">add</span>
-        </button>
+        <div class="button-wrapper">
+          <button id="newChatBtn" class="icon-button" title="New Chat">
+            <span class="material-icons">add</span>
+          </button>
+        </div>
       </div>
       <div class="chat-list" id="chatList">
         <!-- Chat items will be added here dynamically -->
       </div>
-    </div>
-    <div class="main-wrapper">
-      <div class="header">
-        <button id="settingsBtn" class="icon-button" title="Settings">
-          <span class="material-icons">settings</span>
-        </button>
-        <div class="mode-selector">
-          <button id="basicModeBtn" class="mode-btn">Basic</button>
-          <button id="urlModeBtn" class="mode-btn active">URL Context</button>
+    </aside>
+
+    <main class="main-wrapper">
+      <header class="header">
+        <div class="button-wrapper">
+          <button id="settingsBtn" class="icon-button" title="Settings">
+            <span class="material-icons">settings</span>
+          </button>
         </div>
-      </div>
+        <div class="mode-selector">
+          <div class="button-wrapper">
+            <button id="basicModeBtn" class="mode-btn">Basic</button>
+          </div>
+          <div class="button-wrapper">
+            <button id="urlModeBtn" class="mode-btn active">URL Context</button>
+          </div>
+        </div>
+      </header>
       
       <div id="urlContextIndicator" class="url-indicator hidden"></div>
 
-      <div class="main-content">
-        <div class="search-container">
-          <textarea id="searchInput" placeholder="Ask anything..."></textarea>
-          <div class="button-group">
+      <div class="search-container">
+        <textarea id="searchInput" class="search-input" placeholder="Ask anything..." rows="3"></textarea>
+        <div class="button-group">
+          <div class="button-wrapper">
             <button id="voiceInputBtn" class="icon-button" title="Voice Input">
               <span class="material-icons">mic</span>
             </button>
+          </div>
+          <div class="button-wrapper">
             <button id="searchBtn" class="primary-button">
               <span class="material-icons">search</span>
               Search
             </button>
           </div>
         </div>
+      </div>
 
-        <div class="analysis-buttons">
+      <div class="analysis-buttons">
+        <div class="button-wrapper">
           <button id="analyzePageBtn" class="analysis-btn">
             <span class="material-icons">article</span>
             Analyze
           </button>
+        </div>
+        <div class="button-wrapper">
           <button id="summarizeBtn" class="analysis-btn">
             <span class="material-icons">summarize</span>
             Summarize
           </button>
+        </div>
+        <div class="button-wrapper">
           <button id="keyPointsBtn" class="analysis-btn">
             <span class="material-icons">format_list_bulleted</span>
             Key Points
           </button>
         </div>
+      </div>
 
-        <div id="resultContainer" class="result-container hidden">
-          <div id="result" class="result"></div>
-          <div class="result-actions">
+      <div id="resultContainer" class="result-container hidden">
+        <div id="result" class="result"></div>
+        <div class="result-actions">
+          <div class="button-wrapper">
             <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
               <span class="material-icons">content_copy</span>
             </button>
+          </div>
+          <div class="button-wrapper">
             <button id="downloadBtn" class="icon-button" title="Download">
               <span class="material-icons">download</span>
             </button>
+          </div>
+          <div class="button-wrapper">
             <button id="shareBtn" class="icon-button" title="Share">
               <span class="material-icons">share</span>
             </button>
+          </div>
+          <div class="button-wrapper">
             <button id="resetBtn" class="icon-button" title="Reset">
               <span class="material-icons">refresh</span>
             </button>
           </div>
         </div>
       </div>
+    </main>
 
-      <div id="settingsPanel" class="settings-panel hidden">
-        <div class="settings-header">
-          <h2>Settings</h2>
-          <div class="tab-buttons">
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <div class="tab-buttons">
+          <div class="button-wrapper">
             <button class="tab-btn active" data-tab="general">General</button>
+          </div>
+          <div class="button-wrapper">
+            <button class="tab-btn" data-tab="personality">Personality</button>
+          </div>
+          <div class="button-wrapper">
             <button class="tab-btn" data-tab="models">Models</button>
           </div>
         </div>
-        
-        <div id="generalTab" class="tab-content active">
-          <div class="form-group">
-            <label for="apiKey">OpenRouter API Key</label>
-            <input type="password" id="apiKey" placeholder="Enter your API key">
-            <div class="api-key-validation"></div>
-          </div>
-          <div class="form-group">
-            <label for="temperature">Response Creativity</label>
-            <div class="slider-container">
-              <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
-              <span id="temperatureValue">0.7</span>
-            </div>
+      </div>
+      
+      <div id="generalTab" class="tab-content active">
+        <div class="form-group">
+          <label for="apiKey">OpenRouter API Key</label>
+          <input type="password" id="apiKey" placeholder="Enter your API key">
+          <div class="input-feedback"></div>
+        </div>
+        <div class="form-group">
+          <label for="temperature">Response Creativity</label>
+          <div class="slider-container">
+            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+            <span id="temperatureValue">0.7</span>
           </div>
         </div>
-        
-        <div id="modelsTab" class="tab-content">
-          <div class="form-group">
-            <label for="model">Model Selection</label>
-            <select id="model">
-              <option value="" disabled selected>Enter API key to see models</option>
-            </select>
-          </div>
+      </div>
+      
+      <div id="personalityTab" class="tab-content">
+        <div class="form-group">
+          <label for="botName">Bot Name</label>
+          <input type="text" id="botName" placeholder="Enter bot name">
+          <div class="input-feedback"></div>
         </div>
-        
-        <button id="saveSettings" class="primary-button">
-          <span class="material-icons">save</span>
-          Save Settings
-        </button>
+        <div class="form-group">
+          <label for="personalityPreset">Personality Preset</label>
+          <select id="personalityPreset">
+            <option value="professional">Professional</option>
+            <option value="friendly">Friendly</option>
+            <option value="technical">Technical</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="customPersonality">Custom Personality Description</label>
+          <textarea id="customPersonality" placeholder="Describe the bot's personality..." rows="4"></textarea>
+          <div class="input-feedback"></div>
+        </div>
+      </div>
+
+      <div id="modelsTab" class="tab-content">
+        <div class="form-group">
+          <label for="model">Model Selection</label>
+          <select id="model">
+            <option value="" disabled selected>Enter API key to see models</option>
+          </select>
+          <div class="input-feedback"></div>
+        </div>
+      </div>
+      
+      <div class="settings-footer">
+        <div class="button-wrapper">
+          <button id="saveSettings" class="primary-button">
+            <span class="material-icons">save</span>
+            Save Settings
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="message" class="message"></div>
+  <div id="settingsBackdrop" class="settings-backdrop"></div>
   <script type="module" src="popup.js"></script>
 </body>
 </html>

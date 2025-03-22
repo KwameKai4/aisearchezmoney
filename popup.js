@@ -92,20 +92,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     return chat;
   }
 
+  function showConfirmDialog(message, onConfirm) {
+    const dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+    dialog.innerHTML = `
+      <div class="confirm-content">
+        <p>${message}</p>
+        <div class="confirm-buttons">
+          <button class="cancel-btn">Cancel</button>
+          <button class="confirm-btn">Confirm</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    setTimeout(() => dialog.classList.add('show'), 10);
+    
+    const handleClose = () => {
+      dialog.classList.remove('show');
+      setTimeout(() => dialog.remove(), 300);
+    };
+    
+    dialog.querySelector('.confirm-btn').addEventListener('click', () => {
+      onConfirm();
+      handleClose();
+    });
+    
+    dialog.querySelector('.cancel-btn').addEventListener('click', handleClose);
+  }
+
   async function deleteChat(chatId) {
-    const chats = await loadChats();
-    const newChats = chats.filter(c => c.id !== chatId);
-    await saveChats(newChats);
-    
-    if (currentChat?.id === chatId) {
-      if (newChats.length > 0) {
-        await switchChat(newChats[0].id);
-      } else {
-        await createNewChat();
+    showConfirmDialog('Are you sure you want to delete this chat?', async () => {
+      const chats = await loadChats();
+      const newChats = chats.filter(c => c.id !== chatId);
+      await saveChats(newChats);
+      
+      if (currentChat?.id === chatId) {
+        if (newChats.length > 0) {
+          await switchChat(newChats[0].id);
+        } else {
+          await createNewChat();
+        }
       }
-    }
-    
-    renderChatList();
+      
+      renderChatList();
+      showMessage('Chat deleted successfully', 'success');
+    });
   }
 
   async function renameChat(chatId, newTitle) {
@@ -241,27 +273,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         'apiKey', 
         'model', 
         'temperature', 
-        'useUrlContext'
+        'useUrlContext',
+        'botName',
+        'personalityPreset',
+        'customPersonality'
       ]);
       
+      // Load API key and model settings
       if (settings.apiKey) {
         apiKeyInput.value = settings.apiKey;
         await updateModelOptions(settings.apiKey);
-        
         if (settings.model) {
           modelSelect.value = settings.model;
         }
       }
       
+      // Load temperature setting
+      const temperatureSlider = document.getElementById('temperature');
+      const temperatureValue = document.getElementById('temperatureValue');
       if (settings.temperature) {
-        const temperatureSlider = document.getElementById('temperature');
-        const temperatureValue = document.getElementById('temperatureValue');
         temperatureSlider.value = settings.temperature;
         temperatureValue.textContent = settings.temperature;
       }
       
+      // Load context mode setting
       isUseUrlContext = settings.useUrlContext !== undefined ? settings.useUrlContext : true;
       updateModeButtons();
+      
+      // Load bot name and personality settings
+      const botNameInput = document.getElementById('botName');
+      const personalityPreset = document.getElementById('personalityPreset');
+      const customPersonality = document.getElementById('customPersonality');
+      
+      if (botNameInput) {
+        botNameInput.value = settings.botName || 'AI Assistant';
+      }
+      
+      if (personalityPreset) {
+        personalityPreset.value = settings.personalityPreset || 'professional';
+        // Handle custom personality textarea
+        if (customPersonality) {
+          customPersonality.value = settings.customPersonality || '';
+          customPersonality.disabled = settings.personalityPreset !== 'custom';
+        }
+      }
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -298,12 +353,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Add input validation feedback
+  // Enhanced input validation
+  function validateInput(input, validationFn, errorMessage) {
+    const isValid = validationFn(input.value.trim());
+    let feedbackDiv = input.nextElementSibling;
+    
+    if (!feedbackDiv || !feedbackDiv.classList.contains('input-feedback')) {
+      feedbackDiv = document.createElement('div');
+      feedbackDiv.className = 'input-feedback';
+      input.parentNode.insertBefore(feedbackDiv, input.nextSibling);
+    }
+    
+    input.classList.toggle('valid', isValid);
+    input.classList.toggle('invalid', !isValid && input.value.trim().length > 0);
+    
+    if (!isValid && input.value.trim().length > 0) {
+      feedbackDiv.textContent = errorMessage;
+      feedbackDiv.classList.add('show');
+    } else {
+      feedbackDiv.classList.remove('show');
+    }
+    
+    return isValid;
+  }
+
+  // Add input validation
   apiKeyInput.addEventListener('input', () => {
-    const isValid = apiKeyInput.value.trim().length >= 32;
-    apiKeyInput.classList.toggle('valid', isValid);
-    apiKeyInput.classList.toggle('invalid', !isValid && apiKeyInput.value.trim().length > 0);
+    validateInput(
+      apiKeyInput,
+      value => value.trim().length >= 32,
+      'API key should be at least 32 characters long'
+    );
   });
+
+  const botNameInput = document.getElementById('botName');
+  if (botNameInput) {
+    botNameInput.addEventListener('input', () => {
+      validateInput(
+        botNameInput,
+        value => value.trim().length >= 1 && value.trim().length <= 50,
+        'Bot name should be between 1 and 50 characters'
+      );
+    });
+  }
+
+  const customPersonalityTextarea = document.getElementById('customPersonality');
+  if (customPersonalityTextarea) {
+    customPersonalityTextarea.addEventListener('input', () => {
+      validateInput(
+        customPersonalityTextarea,
+        value => value.trim().length === 0 || value.trim().length >= 10,
+        'Custom personality description should be at least 10 characters'
+      );
+    });
+  }
 
   // Update model options with validation
   async function updateModelOptions(apiKey) {
@@ -342,11 +445,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Show message helper
   function showMessage(text, type = 'info') {
-    messageDiv.textContent = text;
-    messageDiv.className = 'message ' + type;
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warning: '⚠',
+      info: 'ℹ'
+    };
     
+    messageDiv.innerHTML = `
+      <span class="message-icon">${icons[type] || icons.info}</span>
+      <span class="message-text">${text}</span>
+    `;
+    messageDiv.className = `message ${type}`;
+    
+    messageDiv.classList.add('show');
     setTimeout(() => {
-      messageDiv.className = 'message';
+      messageDiv.classList.remove('show');
     }, 3000);
   }
 
@@ -355,6 +469,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const apiKey = apiKeyInput.value.trim();
     const model = modelSelect.value;
     const temperature = document.getElementById('temperature')?.value || 0.7;
+    const botName = document.getElementById('botName').value.trim();
+    const personalityPreset = document.getElementById('personalityPreset').value;
+    const customPersonality = document.getElementById('customPersonality').value.trim();
 
     try {
       // Validate API key first
@@ -364,7 +481,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         apiKey,
         model,
         temperature,
-        useUrlContext: isUseUrlContext
+        useUrlContext: isUseUrlContext,
+        botName: botName || 'AI Assistant',
+        personalityPreset,
+        customPersonality
       };
 
       await chrome.storage.sync.set(settings);
@@ -378,18 +498,95 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Settings panel handling
+  const settingsBackdrop = document.getElementById('settingsBackdrop');
+
+  function openSettings() {
+    settingsPanel.classList.remove('hidden');
+    settingsBackdrop.classList.add('show');
+    settingsBtn.classList.add('active');
+    // Allow DOM to update before adding show class for animation
+    requestAnimationFrame(() => {
+      settingsPanel.classList.add('show');
+    });
+  }
+
+  function closeSettings() {
+    settingsPanel.classList.remove('show');
+    settingsBackdrop.classList.remove('show');
+    settingsBtn.classList.remove('active');
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+      settingsPanel.classList.add('hidden');
+    }, 300);
+  }
+
   // Toggle settings panel
   settingsBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Stop event from propagating to document
-    settingsPanel.classList.toggle('hidden');
+    e.stopPropagation();
+    if (settingsPanel.classList.contains('hidden')) {
+      openSettings();
+    } else {
+      closeSettings();
+    }
   });
 
-  // Close settings when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!settingsPanel.classList.contains('hidden') && 
-        !settingsPanel.contains(e.target) && 
-        e.target !== settingsBtn) {
-      settingsPanel.classList.add('hidden');
+  // Close settings when clicking on backdrop
+  settingsBackdrop.addEventListener('click', closeSettings);
+  
+  // Prevent clicks inside settings panel from closing it
+  settingsPanel.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  // Handle escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !settingsPanel.classList.contains('hidden')) {
+      closeSettings();
+    }
+  });
+
+  // Close settings when clicking save button
+  saveSettingsBtn.addEventListener('click', async () => {
+    try {
+      const apiKey = apiKeyInput.value.trim();
+      const model = modelSelect.value;
+      const temperature = document.getElementById('temperature')?.value || 0.7;
+      const botName = document.getElementById('botName')?.value.trim();
+      const personalityPreset = document.getElementById('personalityPreset')?.value;
+      const customPersonality = document.getElementById('customPersonality')?.value.trim();
+
+      // Validate required fields
+      if (!apiKey) {
+        throw new Error('API key is required');
+      }
+      if (!botName) {
+        throw new Error('Bot name is required');
+      }
+      if (personalityPreset === 'custom' && !customPersonality) {
+        throw new Error('Custom personality description is required when using custom preset');
+      }
+
+      // Validate API key
+      await validateApiKey(apiKey);
+
+      const settings = {
+        apiKey,
+        model,
+        temperature,
+        useUrlContext: isUseUrlContext,
+        botName,
+        personalityPreset,
+        customPersonality: personalityPreset === 'custom' ? customPersonality : ''
+      };
+
+      await chrome.storage.sync.set(settings);
+      await updateModelOptions(apiKey);
+      showMessage('Settings saved successfully', 'success');
+      closeSettings();
+    } catch (error) {
+      showMessage(error.message || 'Failed to save settings', 'error');
+      console.error('Settings save error:', error);
     }
   });
 
@@ -501,6 +698,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Send command to AI model - simplified version for buttons
   async function sendCommand(command, context = null) {
+    // Update breadcrumb
+    document.getElementById('currentContext').textContent = context?.title || 'Current Page';
+    document.getElementById('currentAction').textContent = command;
     showMessage(`Executing: ${command}...`, 'info');
     
     const settings = await chrome.storage.sync.get(['apiKey', 'model', 'temperature']);
@@ -515,7 +715,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const model = settings.model || AVAILABLE_MODELS[0].id;
     const temperature = settings.temperature || 0.7;
     
-    let systemPrompt = `You are a helpful AI assistant. The user has requested to ${command.toLowerCase()} the current web page they're viewing.`;
+    const personalitySettings = await chrome.storage.sync.get(['botName', 'personalityPreset', 'customPersonality']);
+    const botName = personalitySettings.botName || 'AI Assistant';
+    let personality = '';
+    
+    switch (personalitySettings.personalityPreset) {
+      case 'professional':
+        personality = 'You are professional, formal, and business-focused in your communication';
+        break;
+      case 'friendly':
+        personality = 'You are warm, friendly, and conversational in your communication';
+        break;
+      case 'technical':
+        personality = 'You are technically precise and detailed in your communication';
+        break;
+      case 'custom':
+        personality = personalitySettings.customPersonality || '';
+        break;
+    }
+
+    let systemPrompt = `You are ${botName}. ${personality}. The user has requested to ${command.toLowerCase()} the current web page they're viewing.`;
     
     if (context && isUseUrlContext) {
       systemPrompt += ` The page title is "${context.title}" (${context.url}).`;
@@ -574,8 +793,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       return responseText;
     } catch (error) {
       console.error('API error:', error);
-      result.textContent = 'Error: Could not get a response. Please check your settings and try again.';
-      showMessage('Failed to execute command', 'error');
+      
+      // Determine error type and show appropriate message
+      let errorMessage = 'Failed to execute command';
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please try again';
+      } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error. Please check your connection';
+      } else if (error.message.includes('status: 429')) {
+        errorMessage = 'Rate limit exceeded. Please wait a moment';
+      } else if (error.message.includes('status: 401')) {
+        errorMessage = 'Invalid API key or authorization expired';
+        settingsPanel.classList.remove('hidden');
+      }
+
+      result.textContent = `Error: ${errorMessage}`;
+      showMessage(errorMessage, 'error');
+
+      // Retry logic for network errors
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        showMessage('Retrying in 5 seconds...', 'info');
+        setTimeout(() => {
+          sendCommand(command, context);
+        }, 5000);
+      }
+      
+      // Clear invalid API key if authentication failed
+      if (error.message.includes('status: 401')) {
+        await chrome.storage.sync.remove('apiKey');
+        await updateModelOptions(null);
+      }
     }
   }
 
@@ -593,7 +840,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const model = settings.model || AVAILABLE_MODELS[0].id;
     const temperature = settings.temperature || 0.7;
     
-    let systemPrompt = 'You are a helpful AI assistant.';
+    const personalitySettings = await chrome.storage.sync.get(['botName', 'personalityPreset', 'customPersonality']);
+    const botName = personalitySettings.botName || 'AI Assistant';
+    let personality = '';
+    
+    switch (personalitySettings.personalityPreset) {
+      case 'professional':
+        personality = 'You are professional, formal, and business-focused in your communication';
+        break;
+      case 'friendly':
+        personality = 'You are warm, friendly, and conversational in your communication';
+        break;
+      case 'technical':
+        personality = 'You are technically precise and detailed in your communication';
+        break;
+      case 'custom':
+        personality = personalitySettings.customPersonality || '';
+        break;
+    }
+
+    let systemPrompt = `You are ${botName}. ${personality}.`;
     
     if (context && isUseUrlContext) {
       systemPrompt += ` The user is currently browsing ${context.title} (${context.url}).`;
@@ -660,8 +926,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       return responseText;
     } catch (error) {
       console.error('API error:', error);
-      result.textContent = 'Error: Could not get a response. Please check your settings and try again.';
-      showMessage('Failed to get response from AI', 'error');
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to get response from AI';
+      let shouldRetry = false;
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please try again';
+        shouldRetry = true;
+      } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error. Please check your connection';
+        shouldRetry = true;
+      } else if (error.message.includes('status: 429')) {
+        errorMessage = 'Rate limit exceeded. Please wait a moment';
+        setTimeout(() => {
+          showMessage('You can try again now', 'info');
+        }, 10000);
+      } else if (error.message.includes('status: 401')) {
+        errorMessage = 'Invalid API key or authorization expired';
+        settingsPanel.classList.remove('hidden');
+        await chrome.storage.sync.remove('apiKey');
+        await updateModelOptions(null);
+      }
+      
+      result.textContent = `Error: ${errorMessage}`;
+      showMessage(errorMessage, 'error');
+      
+      // Automatic retry for network errors
+      if (shouldRetry) {
+        const retryDelay = 5000;
+        showMessage(`Retrying in ${retryDelay/1000} seconds...`, 'info');
+        setTimeout(() => {
+          sendQuery(query, context);
+        }, retryDelay);
+      }
     }
   }
 
@@ -755,9 +1053,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Reset the conversation
-  resetBtn.addEventListener('click', async () => {
-    await createNewChat();
-    showMessage('Started new chat', 'success');
+  resetBtn.addEventListener('click', () => {
+    showConfirmDialog('Are you sure you want to start a new chat? This will clear the current conversation.', async () => {
+      await createNewChat();
+      showMessage('Started new chat', 'success');
+    });
   });
 
   // Search button handler
@@ -866,8 +1166,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     sendCommand('List the key points from this page as bullet points', context);
   });
 
+  // Load personality settings
+  function loadPersonalitySettings(settings) {
+    const botNameInput = document.getElementById('botName');
+    const personalityPresetSelect = document.getElementById('personalityPreset');
+    const customPersonalityTextarea = document.getElementById('customPersonality');
+
+    if (settings.botName) {
+      botNameInput.value = settings.botName;
+    }
+    if (settings.personalityPreset) {
+      personalityPresetSelect.value = settings.personalityPreset;
+    }
+    if (settings.customPersonality) {
+      customPersonalityTextarea.value = settings.customPersonality;
+    }
+  }
+
+  // Handle personality preset changes
+  document.getElementById('personalityPreset').addEventListener('change', (e) => {
+    const customPersonalityTextarea = document.getElementById('customPersonality');
+    if (e.target.value === 'custom') {
+      customPersonalityTextarea.removeAttribute('disabled');
+    } else {
+      customPersonalityTextarea.setAttribute('disabled', 'disabled');
+      customPersonalityTextarea.value = '';
+    }
+  });
+
+  // Cleanup function to remove event listeners
+  function cleanup() {
+    // Remove document-level listeners
+    document.removeEventListener('click', handleOutsideClick);
+    
+    // Remove tab button listeners
+    tabButtons.forEach(button => {
+      button.removeEventListener('click', handleTabClick);
+    });
+
+    // Remove voice recognition if active
+    if (isRecording && window.webkitSpeechRecognition) {
+      recognition?.stop();
+    }
+
+    // Remove all message timeouts
+    clearTimeout(messageTimeout);
+  }
+
+  // Handle outside clicks for settings panel
+  const handleOutsideClick = (e) => {
+    if (!settingsPanel.classList.contains('hidden') && 
+        !settingsPanel.contains(e.target) && 
+        e.target !== settingsBtn) {
+      settingsPanel.classList.add('hidden');
+    }
+  };
+
+  // Handle tab clicks
+  const handleTabClick = function() {
+    const tab = this.dataset.tab;
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(`${tab}Tab`).classList.add('active');
+  };
+
+  // Update event listeners with named functions
+  document.addEventListener('click', handleOutsideClick);
+  tabButtons.forEach(button => {
+    button.addEventListener('click', handleTabClick);
+  });
+
   // Initialize
-  await loadSettings();
+  await loadSettings().then(settings => {
+    if (settings) {
+      loadPersonalitySettings(settings);
+    }
+  });
   await getCurrentPageContext();
   await initializeChat();
+
+  // Add cleanup on window unload
+  window.addEventListener('unload', cleanup);
 });

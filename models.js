@@ -390,5 +390,13 @@ export const models = [
     free: true,
     contextWindow: 4096,
     description: "Good for everyday tasks, fast responses"
+  },
+  {
+    id: "mistralai/mistral-small-3.1-24b-instruct:free",
+    name: "Mistral: Mistral Small 3.1 24B Instruct",
+    provider: "Mistral",
+    free: true,
+    contextWindow: 128000,
+    description: "Good for everyday tasks, fast responses"
   }
 ];
