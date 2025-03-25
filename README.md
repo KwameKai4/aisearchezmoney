@@ -2,6 +2,12 @@
 
 A powerful Chrome extension that integrates AI capabilities directly into your browsing experience. Analyze pages, get summaries, and chat with an AI assistant about any web content.
 
+## Screenshots
+
+![Main Interface](pic1.png)
+![Settings Panel](pic2.png)
+![Analysis Mode](pic3.png)
+
 ## Features
 
 ### Core Functionality
@@ -134,8 +140,3 @@ For issues or questions:
 3. Provide detailed description
 4. Include steps to reproduce
 
-## Screenshots
-
-![Main Interface](pic1.png)
-![Settings Panel](pic2.png)
-![Analysis Mode](pic3.png)
