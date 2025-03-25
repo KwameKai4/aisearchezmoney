@@ -1,59 +1,141 @@
-# AI Search Assistant: Revolutionize Your Search Experience
+# AI Assistant Browser Extension
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blueviolet)](https://chrome.google.com/webstore/detail/ai-search-assistant/abcdefghijklmnopqrstuvwxyz)
-[![Home Page](pic1.png)
-[![Settings Page](pic2.png)
-[![Model Page](pic3.png)
-A powerful and privacy-focused Chrome extension that brings AI-driven search capabilities to your browser, making it the ultimate tool for efficient and accurate information gathering. AI Search Assistant stands out from the competition by prioritizing user privacy, offering unparalleled customization, and providing a seamless, intuitive user experience.
+A powerful Chrome extension that integrates AI capabilities directly into your browsing experience. Analyze pages, get summaries, and chat with an AI assistant about any web content.
 
-## 🚀 Why Choose AI Search Assistant?
+## Features
 
-1. **Unmatched Privacy:** We believe in keeping your data private. Unlike other search assistants, we don't store your search history or use it for targeted advertising. Your data stays on your device, ensuring your privacy is always protected.
+### Core Functionality
+- **Context-Aware Chat**: Chat with AI about the current webpage or in basic mode
+- **Page Analysis**: Analyze webpages with a single click
+- **Quick Actions**: 
+  - Analyze: Detailed analysis of page content
+  - Summarize: Quick page summaries
+  - Key Points: Extract main points from articles
+- **Voice Input**: Speak your questions directly
 
-2. **AI-Powered Search:** Leverage the power of GPT and other cutting-edge language models for lightning-fast, accurate, and context-aware search results. Our AI understands the content on the webpage you're currently viewing, providing relevant and tailored search suggestions.
+### Advanced Features
+- **Customizable AI Personality**:
+  - Choose from preset personalities (Professional, Friendly, Technical)
+  - Create custom personality descriptions
+  - Set custom bot name
+- **Conversation Management**:
+  - Save and manage chat history
+  - Rename conversations
+  - Easy chat navigation
+- **Result Actions**:
+  - Copy to clipboard
+  - Download responses
+  - Share functionality
+  - Reset conversations
 
-3. **Multimodal Interaction:** Seamlessly switch between voice input and text-to-speech output for a hands-free search experience. Our integration with ElevenLabs ensures high-quality, natural-sounding text-to-speech.
+### Settings & Configuration
+- **API Integration**:
+  - OpenRouter API support
+  - Multiple model selection
+  - Temperature control for response creativity
+- **Context Modes**:
+  - URL Context: AI understands current page
+  - Basic Mode: General conversation
+- **UI Customization**:
+  - Dark/Light mode support
+  - Responsive design
+  - Smooth animations
 
-4. **Customizable AI Models:** Choose from a variety of AI models, including free and paid options, to suit your needs and budget. Our multiple model support ensures you always have the best tool for the job.
+## Installation
 
-5. **Intuitive User Interface:** Our sleek and user-friendly popup interface provides quick access to all the features you need, making your search experience efficient and enjoyable.
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/ai-assistant-extension.git
+```
 
-6. **Local Memory Chats:** Keep track of your previous searches and interactions with our local memory chat feature. Revisit past conversations and build upon them for deeper research and understanding.
+2. Create a `.env` file based on `.env.example`:
+```bash
+cp .env.example .env
+```
 
-## 💻 Features
+3. Add your OpenRouter API key to `.env`:
+```
+OPENROUTER_API_KEY=your_api_key_here
+```
 
-- AI-powered search with GPT and other language models
-- URL context support for page-specific queries
-- Voice input and text-to-speech output with ElevenLabs integration
-- Customizable AI models for tailored search experiences
-- Intuitive and user-friendly popup interface
-- Local memory chats for tracking previous searches and interactions
+4. Load the extension in Chrome:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the extension directory
 
-## 🔒 Privacy and Security
+## Configuration
 
-At AI Search Assistant, we prioritize your privacy and security. Here's how we protect your data:
+### API Setup
+1. Get an API key from [OpenRouter](https://openrouter.ai)
+2. Enter the API key in extension settings
+3. Select your preferred AI model
 
-- **Zero Data Collection:** We don't store your search history or use it for targeted advertising.
-- **Local Processing:** Most processing happens on your device, minimizing data transfer and reducing the risk of data interception.
-- **Secure Storage:** Any data stored locally on your device is encrypted to prevent unauthorized access.
+### Personality Settings
+1. Choose a personality preset or create custom
+2. Set your preferred bot name
+3. Adjust temperature for response creativity
 
-## 💰 Invest in the Future of Search
+## Usage
 
-AI Search Assistant offers an unparalleled search experience, combining cutting-edge AI technology with a strong focus on user privacy. By investing in our project, you'll be supporting a team dedicated to pushing the boundaries of search and ensuring that users have control over their data.
+### Basic Operations
+1. Click the extension icon to open
+2. Type your question or use voice input
+3. Use quick action buttons for common tasks
+4. View responses in the result area
 
-Whether you're an individual looking to enhance your browsing experience or a business interested in integrating our AI search capabilities into your products, AI Search Assistant is the perfect solution for your needs. Join us in revolutionizing the way we search and discover information online.
+### Context Modes
+- **URL Mode**: AI understands current page
+- **Basic Mode**: General conversation without context
 
-## 📝 Contributing
+### Managing Conversations
+- Create new chats with the '+' button
+- Rename chats by double-clicking
+- Delete chats using the 'x' button
+- Switch between conversations in sidebar
 
-We welcome contributions from the community! If you'd like to help improve AI Search Assistant, please follow our [Contributing Guidelines](CONTRIBUTING.md) and submit a pull request.
+## Development
 
-## 📄 License
+### Project Structure
+```
+├── manifest.json        # Extension configuration
+├── popup.html          # Main UI
+├── popup.js            # UI logic
+├── content.js          # Page interaction
+├── background.js       # Background processes
+├── styles.css          # Styling
+├── models.js           # AI model definitions
+└── config.js          # Configuration
+```
 
-AI Search Assistant is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Build & Test
+1. Make changes to source files
+2. Reload extension in Chrome
+3. Test functionality
+4. Check console for errors
 
-## 📞 Contact
+## Contributing
 
-For any questions, suggestions, or inquiries about investment opportunities, please don't hesitate to reach out to us at [kwame.whe@gmail.com](mailto:kwame.whe@gmail.com).
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Push to the branch
+5. Open a pull request
 
-Let's redefine the way you search – try AI Search Assistant today! 🔎🤖
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For issues or questions:
+1. Check existing issues
+2. Open new issue if needed
+3. Provide detailed description
+4. Include steps to reproduce
+
+## Screenshots
+
+![Main Interface](pic1.png)
+![Settings Panel](pic2.png)
+![Analysis Mode](pic3.png)

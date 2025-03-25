@@ -184,6 +184,14 @@ export const models = [
     description: "Good for everyday tasks, fast responses"
   },
   {
+    id: "deepseek/deepseek-chat-v3-0324:free",
+    name: "DeepSeek: DeepSeek V3 chat",
+    provider: "DeepSeek",
+    free: true,
+    contextWindow: 131072,
+    description: "Good for everyday tasks, fast responses"
+  },
+  {
     id: "deepseek/deepseek-chat:free",
     name: "DeepSeek: DeepSeek V3",
     provider: "DeepSeek",
