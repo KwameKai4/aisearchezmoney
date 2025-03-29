@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Search Assistant",
+  "name": "Kwiksearch",
   "description": "An AI-powered search assistant for analyzing web pages and answering questions",
   "version": "1.0",
   "permissions": [

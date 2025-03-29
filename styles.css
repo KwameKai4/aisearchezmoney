@@ -216,6 +216,7 @@ body {
   padding: 1rem;
 }
 
+/* Chat item and delete button styling */
 .chat-item {
   display: flex;
   align-items: center;
@@ -226,6 +227,7 @@ body {
   background: var(--background-color);
   transition: all var(--transition-normal);
   border: 1px solid transparent;
+  position: relative;
 }
 
 .chat-item:hover,
@@ -247,6 +249,40 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.chat-delete-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: unset;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  visibility: visible;
+  opacity: 0.7;
+}
+
+.chat-delete-btn:hover {
+  background-color: var(--error-color);
+  color: white;
+  opacity: 1;
+}
+
+.chat-delete-btn .material-icons {
+  font-size: 1rem;
+}
+
+.chat-item:hover .chat-delete-btn {
+  opacity: 1;
 }
 
 .chat-rename-input {
@@ -421,24 +457,87 @@ body {
   color: var(--primary-color);
 }
 
-/* Result Area */
+/* Result Area - making it more extendable */
 .result-container {
   flex: 1;
   padding: 1rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  height: calc(var(--popup-height) - var(--header-height) - 150px);
-  max-height: calc(var(--popup-height) - var(--header-height) - 150px);
+  /* Remove fixed height constraints */
+  height: auto;
+  min-height: calc(var(--popup-height) - var(--header-height) - 180px);
   transition: all var(--transition-normal);
   background: var(--background-color);
   scroll-behavior: smooth;
   position: relative;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  /* Set grow property to allow expansion */
+  flex-grow: 1;
 }
 
 .result-container:not(.hidden) {
   display: flex;
+}
+
+/* Add resizable functionality to result container */
+.result {
+  flex: 1;
+  width: 100%;
+  background: var(--surface-color);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  height: 100%;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  /* Allow result to grow within container */
+  flex-grow: 1;
+  resize: vertical;
+}
+
+/* Custom resize handle styling */
+.result::after {
+  content: '';
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  width: 12px;
+  height: 12px;
+  background-image: linear-gradient(135deg, 
+    transparent 0%, transparent 50%, 
+    var(--primary-color) 50%, var(--primary-color) 60%, 
+    transparent 60%, transparent 100%);
+  background-size: 8px 8px;
+  background-repeat: no-repeat;
+  cursor: nwse-resize;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.result:hover::after {
+  opacity: 1;
+}
+
+/* Style for the result actions bar */
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 0.75rem;
+  background: var(--surface-color);
+  border-top: 1px solid var(--border-color);
+  border-radius: 0 0 0.75rem 0.75rem;
+  transition: all 0.3s ease;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
 }
 
 /* Loading State */
@@ -476,69 +575,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-.result {
-  flex: 1;
-  background: var(--surface-color);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-  height: auto;
-  min-height: 150px;
-}
-
-.result:hover {
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.result-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  padding: 1rem;
-  background: var(--surface-color);
-  border-top: 1px solid var(--border-color);
-  border-radius: 0 0 1rem 1rem;
-  transition: all 0.3s ease;
-}
-
-.result-actions button {
-  transition: all 0.3s ease;
-  margin: 0 0.25rem;
-}
-
-.result-actions button:hover {
-  transform: scale(1.15);
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.result-actions button:active {
-  transform: var(--active-button-transform);
-}
-
-/* Code block styling improvements */
-.code-block {
-  background: #f5f5f5;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  font-family: 'Consolas', 'Monaco', monospace;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  margin: 1rem 0;
-  white-space: pre-wrap;
-}
-
-.dark .code-block {
-  background: #2d2d2d;
-}
-
 /* Settings Panel with fixed z-index and overlay issues */
 .settings-panel {
   position: fixed;
@@ -554,7 +590,6 @@ body {
   display: flex;
   flex-direction: column;
   visibility: hidden;
-  pointer-events: all; /* Ensure clicks work */
 }
 
 .settings-panel.show {
@@ -576,29 +611,37 @@ body {
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--transition-normal), visibility var(--transition-normal);
-  z-index: 1000; /* Just below settings panel */
+  z-index: 999; /* Below settings panel */
   pointer-events: none; /* Start with no pointer events */
 }
 
 .settings-backdrop.show {
   opacity: 1;
   visibility: visible;
-  pointer-events: all; /* Enable pointer events when visible */
+  pointer-events: auto; /* Enable pointer events when visible */
 }
 
-/* Form group styles to ensure form elements are interactive */
+/* Settings header styling */
+.settings-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-header h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+}
+
+/* Form group styles for better spacing and clickability */
 .form-group {
   margin-bottom: 1.5rem;
-  position: relative;
-  z-index: 1002; /* Above panel */
 }
 
 .tab-content {
   display: none;
   padding: 1rem;
   overflow-y: auto;
-  position: relative;
-  z-index: 1002; /* Above panel */
+  height: 100%;
 }
 
 .tab-content.active {
@@ -608,9 +651,29 @@ body {
 .tab-buttons {
   display: flex;
   gap: 1rem;
+  padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  position: relative;
-  z-index: 1002; /* Above panel */
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+}
+
+.tab-btn:hover {
+  color: var(--primary-color);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
 }
 
 /* Settings footer for save button */
@@ -619,24 +682,6 @@ body {
   border-top: 1px solid var(--border-color);
   text-align: right;
   margin-top: auto;
-  position: relative;
-  z-index: 1002; /* Above panel */
-}
-
-/* Ensure the save settings button is prominent */
-#saveSettings {
-  background-color: var(--success-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  box-shadow: var(--shadow-md);
-}
-
-#saveSettings:hover {
-  background-color: var(--success-color);
-  opacity: 0.9;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
 }
 
 /* MaterialUI Form Controls */
@@ -946,28 +991,49 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: white;
 }
 
-/* Button Row */
+/* Button Row - smaller buttons */
 .button-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: 0.5rem; /* Reduced gap */
+  margin-top: 0.5rem; /* Less margin */
   flex-wrap: wrap;
   padding-bottom: 0.5rem;
 }
 
+.button-row .mui-button {
+  padding: 0.375rem 0.875rem; /* Smaller padding */
+  font-size: 0.8125rem; /* Smaller font size */
+}
+
+.button-row .mui-button-icon {
+  width: 2.5rem; /* Smaller icon button */
+  height: 2.5rem; /* Smaller icon button */
+  padding: 0.375rem;
+}
+
+.button-row .mui-button .material-icons {
+  font-size: 1.125rem; /* Smaller icons */
+}
+
+/* Keep consistent smaller buttons in analysis section */
+.button-row .mui-button-outlined {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .button-row {
-    gap: 0.5rem;
+    gap: 0.375rem;
   }
   
   .mui-button {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
   }
   
   .mui-button .material-icons {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 }
 

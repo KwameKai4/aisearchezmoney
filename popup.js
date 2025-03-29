@@ -351,10 +351,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Get current page context
   async function getCurrentPageContext() {
     try {
-      // For testing purposes, return dummy context
-      currentUrl = 'https://example.com';
-      pageTitle = 'Example Page';
-      pageContent = 'This is example content for testing.';
+      // Get the current active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      if (!tab || !tab.url || tab.url.startsWith('chrome://')) {
+        // No valid tab or on a chrome:// page which we can't access
+        showMessage('Cannot access content on this page', 'warning');
+        return null;
+      }
+      
+      currentUrl = tab.url;
+      pageTitle = tab.title;
+      
+      // Send message to content script to get page content
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'getPageContent' });
+      
+      if (response && response.success) {
+        pageContent = response.content;
+        pageTitle = response.title || tab.title;
+      } else {
+        showMessage('Could not extract page content', 'warning');
+        pageContent = '';
+      }
 
       if (isUseUrlContext) {
         urlIndicator.textContent = `Using context from: ${pageTitle}`;
@@ -425,66 +443,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Send command to AI model
-  async function sendCommand(command, context = null) {
-    showMessage(`Executing: ${command}...`, 'info');
-    
-    // For testing purposes, return a mock response
-    setTimeout(() => {
-      const mockResponse = `Here's a mock response for the command: ${command}
-      
-This is a sample AI response that simulates what you would get from a real API call.
-      
-• The command was processed successfully
-• This is just for testing button functionality
-• In a real implementation, this would connect to an AI service API`;
-      
-      result.innerHTML = formatResponse(mockResponse);
-      currentResponse = mockResponse;
-      resultContainer.classList.remove('hidden');
-      
-      showMessage('Command executed successfully', 'success');
-    }, 1500);
-    
-    return true;
-  }
-
   // Send query function (for search box)
   async function sendQuery(query, context = null) {
     showMessage('Processing query...', 'info');
     
-    // For testing purposes, return a mock response
-    setTimeout(() => {
-      const mockResponse = `Here's a mock response for the query: "${query}"
+    try {
+      // Get API key and model from settings
+      const { apiKey, model, temperature } = await chrome.storage.sync.get(['apiKey', 'model', 'temperature']);
       
-This is a sample AI response that simulates what you would get from a real API call.
+      if (!apiKey) {
+        showMessage('Please add your API key in settings', 'warning');
+        openSettings();
+        return false;
+      }
       
-• The query was processed successfully
-• This is just for testing search functionality
-• In a real implementation, this would connect to an AI service API
+      // Prepare messages array
+      let messages = [];
       
-**Bold text example**
-*Italic text example*
-\`inline code example\`
+      // Add system message if URL context is enabled
+      if (isUseUrlContext && context && context.content) {
+        messages.push({
+          role: 'system',
+          content: `You are an AI assistant analyzing web content from: ${context.url || 'unknown URL'}
+Title: ${context.title || 'untitled'}
+Please use this content as context for your responses. Page content:
+${context.content.substring(0, 5000)}...`
+        });
+      }
       
-\`\`\`
-function exampleCode() {
-  return "This is a code block example";
-}
-\`\`\``;
+      // Add conversation history for context (limit to last 10 messages)
+      const historyLimit = 10;
+      if (conversationHistory.length > 0) {
+        messages.push(...conversationHistory.slice(-historyLimit));
+      }
       
-      result.innerHTML = formatResponse(mockResponse);
-      currentResponse = mockResponse;
+      // Add the current query
+      messages.push({ role: 'user', content: query });
+      
+      // Prepare API request
+      const response = await fetch(`${API_CONFIG.openRouter.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': API_CONFIG.openRouter.referer || 'https://github.com/extension'
+        },
+        body: JSON.stringify({
+          model: model || 'open-r1/olympiccoder-7b:free',
+          messages,
+          temperature: parseFloat(temperature || 0.7),
+          max_tokens: 2000
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content || 'No response received';
+      
+      // Update UI
+      result.innerHTML = formatResponse(aiResponse);
+      currentResponse = aiResponse;
       resultContainer.classList.remove('hidden');
       
       // Update conversation history
       conversationHistory.push({ role: 'user', content: query });
-      conversationHistory.push({ role: 'assistant', content: mockResponse });
+      conversationHistory.push({ role: 'assistant', content: aiResponse });
       
       // Update current chat if available
       if (currentChat) {
         currentChat.addMessage('user', query);
-        currentChat.addMessage('assistant', mockResponse);
+        currentChat.addMessage('assistant', aiResponse);
         if (currentChat.messages.length === 2) { // First message pair
           currentChat.title = query.substring(0, 30) + (query.length > 30 ? '...' : '');
         }
@@ -493,9 +525,102 @@ function exampleCode() {
       }
       
       showMessage('Query processed successfully', 'success');
-    }, 1500);
+      return true;
+    } catch (error) {
+      console.error("API error:", error);
+      showMessage(`Error: ${error.message}`, 'error');
+      return false;
+    }
+  }
+
+  // Send command to AI model
+  async function sendCommand(command, context = null) {
+    showMessage(`Executing: ${command}...`, 'info');
     
-    return true;
+    try {
+      // Get API key and model from settings
+      const { apiKey, model, temperature } = await chrome.storage.sync.get(['apiKey', 'model', 'temperature']);
+      
+      if (!apiKey) {
+        showMessage('Please add your API key in settings', 'warning');
+        openSettings();
+        return false;
+      }
+      
+      // Prepare messages array
+      let messages = [];
+      
+      // Add system message for command and context if present
+      if (isUseUrlContext && context && context.content) {
+        messages.push({
+          role: 'system',
+          content: `You are an AI assistant analyzing web content from: ${context.url || 'unknown URL'}
+Title: ${context.title || 'untitled'}
+Please perform the following command: "${command}"
+Use this content as context for your response. Page content:
+${context.content.substring(0, 5000)}...`
+        });
+      } else {
+        messages.push({
+          role: 'system',
+          content: `You are an AI assistant. Please perform the following command: "${command}"`
+        });
+      }
+      
+      // Add the command as a user message
+      messages.push({ role: 'user', content: command });
+      
+      // Prepare API request
+      const response = await fetch(`${API_CONFIG.openRouter.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': API_CONFIG.openRouter.referer || 'https://github.com/extension'
+        },
+        body: JSON.stringify({
+          model: model || 'open-r1/olympiccoder-7b:free',
+          messages,
+          temperature: parseFloat(temperature || 0.7),
+          max_tokens: 2000
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const aiResponse = data.choices?.[0]?.message?.content || 'No response received';
+      
+      // Update UI
+      result.innerHTML = formatResponse(aiResponse);
+      currentResponse = aiResponse;
+      resultContainer.classList.remove('hidden');
+      
+      // Update conversation history
+      conversationHistory.push({ role: 'user', content: command });
+      conversationHistory.push({ role: 'assistant', content: aiResponse });
+      
+      // Update current chat if available
+      if (currentChat) {
+        currentChat.addMessage('user', command);
+        currentChat.addMessage('assistant', aiResponse);
+        if (currentChat.messages.length === 2) { // First message pair
+          currentChat.title = command.substring(0, 30) + (command.length > 30 ? '...' : '');
+        }
+        saveCurrentChat();
+        renderChatList();
+      }
+      
+      showMessage('Command executed successfully', 'success');
+      return true;
+    } catch (error) {
+      console.error("API error:", error);
+      showMessage(`Error: ${error.message}`, 'error');
+      return false;
+    }
   }
 
   async function saveCurrentChat() {
@@ -579,13 +704,10 @@ function exampleCode() {
     }
   }
 
-  // Settings panel handling with improved visibility control
-  const settingsBackdrop = document.getElementById('settingsBackdrop');
-
+  // Settings panel handling without backdrop
   function openSettings() {
     console.log("Opening settings panel");
     settingsPanel.classList.remove('hidden');
-    settingsBackdrop.classList.add('show');
     settingsBtn.classList.add('active');
     
     // Allow DOM to update before adding show class for animation
@@ -597,7 +719,6 @@ function exampleCode() {
   function closeSettings() {
     console.log("Closing settings panel");
     settingsPanel.classList.remove('show');
-    settingsBackdrop.classList.remove('show');
     settingsBtn.classList.remove('active');
     
     // Wait for animation to complete before hiding
@@ -620,14 +741,14 @@ function exampleCode() {
     });
   }
 
-  // Close settings when clicking on backdrop
-  if (settingsBackdrop) {
-    settingsBackdrop.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+  // Add event listener to close settings when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!settingsPanel.contains(e.target) && 
+        !settingsBtn.contains(e.target) && 
+        !settingsPanel.classList.contains('hidden')) {
       closeSettings();
-    });
-  }
+    }
+  });
 
   // Ensure the settings panel is interactive
   if (settingsPanel) {
@@ -638,14 +759,37 @@ function exampleCode() {
 
   // Set up save settings button
   if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', (e) => {
+    saveSettingsBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       console.log("Save settings button clicked");
       
-      // Mock saving settings
-      showMessage('Settings saved successfully', 'success');
-      closeSettings();
+      // Save the current settings to chrome.storage
+      try {
+        const settings = {
+          apiKey: apiKeyInput.value,
+          model: modelSelect.value,
+          temperature: temperatureSlider.value,
+          useUrlContext: isUseUrlContext,
+          botName: document.getElementById('botName').value,
+          personalityPreset: document.getElementById('personalityPreset').value,
+          customPersonality: document.getElementById('customPersonality').value
+        };
+        
+        await chrome.storage.sync.set(settings);
+        showMessage('Settings saved successfully', 'success');
+        closeSettings();
+        
+        // Apply the new settings immediately
+        if (isUseUrlContext) {
+          getCurrentPageContext();
+        } else {
+          urlIndicator.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        showMessage('Failed to save settings', 'error');
+      }
     });
   }
   
@@ -689,43 +833,42 @@ function exampleCode() {
     });
   }
 
-  // Load saved settings - Fixed implementation
+  // Load saved settings from chrome.storage
   async function loadSettings() {
     try {
-      // For testing purposes, use default values instead of chrome.storage
-      // In a real implementation, this would use chrome.storage.sync.get
-      
-      const settings = {
-        apiKey: 'sk-sample-test-key-1234567890',
-        model: 'gpt-3.5-turbo',
+      // Use chrome.storage.sync to get settings
+      const result = await chrome.storage.sync.get({
+        // Default values if not found
+        apiKey: '',
+        model: 'open-r1/olympiccoder-7b:free', // Default to first model in the list
         temperature: '0.7',
         useUrlContext: true,
         botName: 'AI Assistant',
         personalityPreset: 'professional',
         customPersonality: ''
-      };
+      });
       
-      console.log("Settings loaded:", settings);
+      console.log("Settings loaded successfully");
       
       // Apply the loaded settings
-      if (apiKeyInput) apiKeyInput.value = settings.apiKey || '';
+      if (apiKeyInput) apiKeyInput.value = result.apiKey || '';
       
       // Update model options
-      if (settings.apiKey) {
-        await updateModelOptions(settings.apiKey);
-        if (settings.model && modelSelect) {
-          modelSelect.value = settings.model;
+      if (result.apiKey) {
+        await updateModelOptions(result.apiKey);
+        if (result.model && modelSelect) {
+          modelSelect.value = result.model;
         }
       }
       
       // Update temperature slider
-      if (temperatureSlider && temperatureValue && settings.temperature) {
-        temperatureSlider.value = settings.temperature;
-        temperatureValue.textContent = settings.temperature;
+      if (temperatureSlider && temperatureValue && result.temperature) {
+        temperatureSlider.value = result.temperature;
+        temperatureValue.textContent = result.temperature;
       }
       
       // Update context mode
-      isUseUrlContext = settings.useUrlContext !== undefined ? settings.useUrlContext : true;
+      isUseUrlContext = result.useUrlContext !== undefined ? result.useUrlContext : true;
       updateModeButtons();
       
       // Update bot personality settings
@@ -734,24 +877,32 @@ function exampleCode() {
       const customPersonalityTextarea = document.getElementById('customPersonality');
       
       if (botNameInput) {
-        botNameInput.value = settings.botName || 'AI Assistant';
+        botNameInput.value = result.botName || 'AI Assistant';
       }
       
       if (personalityPresetSelect) {
-        personalityPresetSelect.value = settings.personalityPreset || 'professional';
+        personalityPresetSelect.value = result.personalityPreset || 'professional';
         
         // Update the custom personality textarea state
         if (customPersonalityTextarea) {
-          customPersonalityTextarea.value = settings.customPersonality || '';
-          customPersonalityTextarea.disabled = settings.personalityPreset !== 'custom';
+          customPersonalityTextarea.value = result.customPersonality || '';
+          customPersonalityTextarea.disabled = result.personalityPreset !== 'custom';
         }
       }
       
-      return settings;
+      return result;
     } catch (error) {
       console.error('Error loading settings:', error);
       showMessage('Failed to load settings, using defaults', 'warning');
-      return {};
+      return {
+        apiKey: '',
+        model: 'open-r1/olympiccoder-7b:free',
+        temperature: '0.7',
+        useUrlContext: true,
+        botName: 'AI Assistant',
+        personalityPreset: 'professional',
+        customPersonality: ''
+      };
     }
   }
 
@@ -763,8 +914,8 @@ function exampleCode() {
       // Try to get last active chat ID - fall back to first chat or create new one
       let lastActiveChatId = null;
       try {
-        // In a real implementation, this would use chrome.storage.local.get
-        lastActiveChatId = null; // For testing
+        const result = await chrome.storage.local.get('lastActiveChatId');
+        lastActiveChatId = result.lastActiveChatId;
       } catch (err) {
         console.log("No last active chat found");
       }
@@ -811,6 +962,247 @@ function exampleCode() {
         urlIndicator.classList.add('hidden');
       }
     }
+  }
+
+  // Set up mode selection buttons
+  if (basicModeBtn && urlModeBtn) {
+    basicModeBtn.addEventListener('click', async () => {
+      isUseUrlContext = false;
+      updateModeButtons();
+      // Save the preference
+      try {
+        await chrome.storage.sync.set({ useUrlContext: false });
+      } catch (error) {
+        console.error('Error saving context mode preference:', error);
+      }
+    });
+    
+    urlModeBtn.addEventListener('click', async () => {
+      isUseUrlContext = true;
+      updateModeButtons();
+      // Save the preference
+      try {
+        await chrome.storage.sync.set({ useUrlContext: true });
+        await getCurrentPageContext(); // Refresh the context immediately
+      } catch (error) {
+        console.error('Error saving context mode preference:', error);
+      }
+    });
+  }
+
+  // Set up main action buttons
+  if (searchBtn) {
+    searchBtn.addEventListener('click', async () => {
+      const query = searchInput.value.trim();
+      if (!query) {
+        showMessage('Please enter a question or query', 'warning');
+        return;
+      }
+      
+      const context = isUseUrlContext ? await getCurrentPageContext() : null;
+      await processQuery(query, context);
+    });
+  }
+
+  // Set up analyze page button
+  if (analyzePageBtn) {
+    analyzePageBtn.addEventListener('click', async () => {
+      const context = await getCurrentPageContext();
+      if (!context) {
+        showMessage('No page content available to analyze', 'warning');
+        return;
+      }
+      
+      await sendCommand('Analyze this page and provide a detailed analysis of its content', context);
+    });
+  }
+
+  // Set up summarize button
+  if (summarizeBtn) {
+    summarizeBtn.addEventListener('click', async () => {
+      const context = await getCurrentPageContext();
+      if (!context) {
+        showMessage('No page content available to summarize', 'warning');
+        return;
+      }
+      
+      await sendCommand('Summarize this page in a concise manner, highlighting the key points', context);
+    });
+  }
+
+  // Set up key points button
+  if (keyPointsBtn) {
+    keyPointsBtn.addEventListener('click', async () => {
+      const context = await getCurrentPageContext();
+      if (!context) {
+        showMessage('No page content available to extract key points from', 'warning');
+        return;
+      }
+      
+      await sendCommand('Extract and list the key points from this page as bullet points', context);
+    });
+  }
+
+  // Set up copy button
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      if (!currentResponse) {
+        showMessage('No content to copy', 'warning');
+        return;
+      }
+      
+      navigator.clipboard.writeText(currentResponse)
+        .then(() => showMessage('Copied to clipboard', 'success'))
+        .catch(err => {
+          console.error('Copy failed:', err);
+          showMessage('Failed to copy to clipboard', 'error');
+        });
+    });
+  }
+
+  // Set up export button and menu
+  if (exportBtn && exportMenu) {
+    // Toggle export menu visibility
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportMenu.classList.toggle('show');
+      
+      // Close menu when clicking anywhere else
+      const closeExportMenu = (event) => {
+        if (!exportMenu.contains(event.target) && event.target !== exportBtn) {
+          exportMenu.classList.remove('show');
+          document.removeEventListener('click', closeExportMenu);
+        }
+      };
+      
+      if (exportMenu.classList.contains('show')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeExportMenu);
+        }, 10);
+      }
+    });
+    
+    // Handle export format selection
+    exportMenu.querySelectorAll('.export-menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const format = e.currentTarget.dataset.format;
+        if (format) {
+          exportResult(format);
+          exportMenu.classList.remove('show');
+        }
+      });
+    });
+  }
+
+  // Set up reset button
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      resetChat();
+      showMessage('Conversation reset', 'info');
+    });
+  }
+
+  // Set up share button
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      if (!currentResponse) {
+        showMessage('No content to share', 'warning');
+        return;
+      }
+      
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: 'AI Assistant Response',
+            text: currentResponse
+          });
+          showMessage('Shared successfully', 'success');
+        } else {
+          // Fallback for browsers without Web Share API
+          copyBtn.click();
+          showMessage('Copied to clipboard for sharing', 'info');
+        }
+      } catch (error) {
+        console.error('Share failed:', error);
+        showMessage('Failed to share content', 'error');
+      }
+    });
+  }
+
+  // Set up voice input button
+  if (voiceInputBtn) {
+    voiceInputBtn.addEventListener('click', () => {
+      if (!('webkitSpeechRecognition' in window)) {
+        showMessage('Speech recognition not supported in this browser', 'warning');
+        return;
+      }
+      
+      if (isRecording) {
+        // Stop recording logic
+        if (window.recognition) {
+          window.recognition.stop();
+          isRecording = false;
+          voiceInputBtn.classList.remove('active');
+          voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+        }
+      } else {
+        // Start recording logic
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        let finalTranscript = '';
+        
+        recognition.onstart = () => {
+          isRecording = true;
+          voiceInputBtn.classList.add('active');
+          voiceInputBtn.querySelector('.material-icons').textContent = 'mic_off';
+          showMessage('Listening...', 'info');
+        };
+        
+        recognition.onresult = (event) => {
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          searchInput.value = finalTranscript + interimTranscript;
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          showMessage(`Voice input error: ${event.error}`, 'error');
+          isRecording = false;
+          voiceInputBtn.classList.remove('active');
+          voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+        };
+        
+        recognition.onend = () => {
+          isRecording = false;
+          voiceInputBtn.classList.remove('active');
+          voiceInputBtn.querySelector('.material-icons').textContent = 'mic';
+        };
+        
+        window.recognition = recognition;
+        recognition.start();
+      }
+    });
+  }
+
+  // Listen for Enter key in search input
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        searchBtn.click();
+      }
+    });
   }
 
   // Initialize on load - ensure this runs properly
