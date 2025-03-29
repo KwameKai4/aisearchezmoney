@@ -41,7 +41,7 @@ export const models = [
   },
   {
     id: "deepseek/deepseek-chat-v3-0324:free",
-    name: "DeepSeek: DeepSeek V3 chat",
+    name: "DeepSeek: DeepSeek V3 cha",
     provider: "DeepSeek",
     free: true,
     contextWindow: 131072,

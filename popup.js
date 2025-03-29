@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await saveChats(newChats);
       
       if (currentChat?.id === chatId) {
+        // If we deleted the current chat, switch to another one or create new
         if (newChats.length > 0) {
           await switchChat(newChats[0].id);
         } else {
