@@ -1,24 +1,27 @@
+/* CSS Variables */
 :root {
-  --primary-color: #5950ed;
-  --secondary-color: #4338ca;
-  --background-color: #f8fafc;
+  --popup-width: 800px;
+  --popup-height: 600px;
+  --primary-color: #2962FF;  /* Brighter vibrant blue */
+  --secondary-color: #0D47A1; /* Deeper blue for contrast */
+  --background-color: #fafafa;
   --surface-color: #ffffff;
-  --text-color: #1e293b;
-  --text-color-secondary: #64748b;
-  --border-color: #e2e8f0;
-  --hover-color: #4338ca;
-  --error-color: #dc2626;
-  --success-color: #16a34a;
-  --warning-color: #d97706;
-  --primary-color-light: #818cf8;
-  --info-color: #0ea5e9;
-  --focus-ring-color: rgba(89, 80, 237, 0.4);
-  --tooltip-background: #1e293b;
-  --loading-background: rgba(30, 41, 59, 0.1);
-  --dialog-overlay: rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --text-color: #212121;
+  --text-color-secondary: #757575;
+  --border-color: #e0e0e0;
+  --hover-color: #1E88E5; /* Vibrant hover blue */
+  --error-color: #F44336; /* Brighter red for better visibility */
+  --success-color: #4CAF50; /* Brighter green */
+  --warning-color: #FF9800; /* Brighter orange */
+  --primary-color-light: #90CAF9; /* Lighter blue that's still vibrant */
+  --info-color: #2196F3; /* Brighter info blue */
+  --focus-ring-color: rgba(41, 98, 255, 0.4); /* Stronger focus ring */
+  --tooltip-background: #424242;
+  --loading-background: rgba(0, 0, 0, 0.05);
+  --dialog-overlay: rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 12px 20px -4px rgba(0, 0, 0, 0.2);
   --transition-fast: 150ms;
   --transition-normal: 250ms;
   --transition-slow: 350ms;
@@ -27,14 +30,24 @@
   --scrollbar-thumb: var(--border-color);
   --header-height: 60px;
   --sidebar-width: 175px;
+  --button-text-color: #ffffff; /* New variable for button text */
+  --button-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Enhanced shadow for buttons */
+  --active-button-transform: scale(0.97); /* Transform for clicked buttons */
 }
 
 /* Base styles */
-body {
-  width: 800px;
-  height: 600px;
+:root, html, body {
+  width: var(--popup-width);
+  height: var(--popup-height);
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body {
+  min-width: var(--popup-width);
+  min-height: var(--popup-height);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
@@ -44,13 +57,23 @@ body {
   letter-spacing: 0.01em;
 }
 
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 0.875rem;
+  }
+}
+
 /* Focus styles for better keyboard navigation */
 *:focus {
   outline: none;
 }
 
 *:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 3px solid var(--primary-color);
   outline-offset: 2px;
   border-radius: 0.25rem;
 }
@@ -80,8 +103,40 @@ body {
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   grid-template-rows: auto 1fr;
-  height: 100vh;
+  height: var(--popup-height);
+  width: var(--popup-width);
+  position: fixed;
+  top: 0;
+  left: 0;
   background: var(--surface-color);
+  overflow: hidden;
+}
+
+/* Ensure all scrollable areas have proper containment */
+.sidebar,
+.main-wrapper,
+.result-container,
+.chat-list {
+  contain: content;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix sidebar layout */
+.sidebar {
+  height: calc(var(--popup-height) - var(--header-height));
+  overflow-y: auto;
+}
+
+/* Fix chat list sizing */
+.chat-list {
+  height: calc(100% - 60px); /* 60px is sidebar-header height */
+  padding: 0.75rem;
+}
+
+/* Main content fixes */
+.main-wrapper {
+  height: calc(var(--popup-height) - var(--header-height));
+  overflow-y: auto;
 }
 
 /* Breadcrumb */
@@ -137,6 +192,7 @@ body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  grid-row: 2;
 }
 
 .sidebar-header {
@@ -207,6 +263,14 @@ body {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  position: relative;
+  background-color: var(--background-color);
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .header {
@@ -218,31 +282,33 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
+/* More noticeable mode selector buttons */
 .mode-selector {
   display: flex;
   gap: 0.5rem;
 }
 
-.mode-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--surface-color);
-  color: var(--text-color);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all var(--transition-normal);
+.mode-selector .mui-button {
+  border-radius: 1.5rem;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 110px;
+  box-shadow: var(--button-shadow);
 }
 
-.mode-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.mode-selector .mui-button-text {
+  background-color: #e0e0e0;
+  color: #666;
 }
 
-.mode-btn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+.mode-selector .mui-button.active {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.mode-selector .mui-button:active {
+  transform: var(--active-button-transform);
 }
 
 /* Search and Input Area */
@@ -250,6 +316,63 @@ body {
   padding: 0.75rem;
   background: var(--surface-color);
   border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  transition: box-shadow var(--transition-normal);
+}
+
+.search-container.scrolled {
+  box-shadow: var(--shadow-md);
+}
+
+/* Search Filters */
+.search-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Enhanced filter chips for better visibility */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 1rem;
+  background: #e3f2fd; /* Light blue background for better visibility */
+  border: 1px solid var(--primary-color-light);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  color: var(--primary-color);
+}
+
+.filter-chip:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-color-light);
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: var(--shadow-md);
+}
+
+.filter-chip.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
+  font-weight: 700;
+}
+
+.filter-chip:active {
+  transform: var(--active-button-transform);
+}
+
+.filter-chip .material-icons {
+  font-size: 1rem;
 }
 
 .search-input {
@@ -305,30 +428,118 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  min-height: 300px;
+  height: calc(var(--popup-height) - var(--header-height) - 150px);
+  max-height: calc(var(--popup-height) - var(--header-height) - 150px);
+  transition: all var(--transition-normal);
+  background: var(--background-color);
+  scroll-behavior: smooth;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.result-container:not(.hidden) {
+  display: flex;
+}
+
+/* Loading State */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(var(--background-color-rgb), 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+.loading-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .result {
   flex: 1;
   background: var(--surface-color);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: var(--shadow-sm);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
-  min-height: 200px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  height: auto;
+  min-height: 150px;
+}
+
+.result:hover {
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .result-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   justify-content: flex-end;
-  padding: 0.5rem;
+  padding: 1rem;
   background: var(--surface-color);
   border-top: 1px solid var(--border-color);
+  border-radius: 0 0 1rem 1rem;
+  transition: all 0.3s ease;
 }
 
-/* Settings Panel */
+.result-actions button {
+  transition: all 0.3s ease;
+  margin: 0 0.25rem;
+}
+
+.result-actions button:hover {
+  transform: scale(1.15);
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.result-actions button:active {
+  transform: var(--active-button-transform);
+}
+
+/* Code block styling improvements */
+.code-block {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 1rem 0;
+  white-space: pre-wrap;
+}
+
+.dark .code-block {
+  background: #2d2d2d;
+}
+
+/* Settings Panel with fixed z-index and overlay issues */
 .settings-panel {
   position: fixed;
   top: 0;
@@ -338,18 +549,21 @@ body {
   background: var(--surface-color);
   box-shadow: var(--shadow-lg);
   transform: translateX(100%);
-  transition: transform var(--transition-normal), visibility var(--transition-normal);
-  z-index: 1000;
+  transition: transform var(--transition-normal);
+  z-index: 1001; /* Increased z-index */
   display: flex;
   flex-direction: column;
   visibility: hidden;
-  opacity: 0;
+  pointer-events: all; /* Ensure clicks work */
 }
 
 .settings-panel.show {
   transform: translateX(0);
   visibility: visible;
-  opacity: 1;
+}
+
+.settings-panel.hidden {
+  z-index: -1; /* Ensure it's completely hidden */
 }
 
 .settings-backdrop {
@@ -362,134 +576,326 @@ body {
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--transition-normal), visibility var(--transition-normal);
-  z-index: 999;
+  z-index: 1000; /* Just below settings panel */
+  pointer-events: none; /* Start with no pointer events */
 }
 
 .settings-backdrop.show {
   opacity: 1;
   visibility: visible;
+  pointer-events: all; /* Enable pointer events when visible */
 }
 
-#settingsBtn {
+/* Form group styles to ensure form elements are interactive */
+.form-group {
+  margin-bottom: 1.5rem;
   position: relative;
-  z-index: 1001;
-}
-
-#settingsBtn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
-
-.settings-header {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.settings-header h2 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-}
-
-.tab-buttons {
-  display: flex;
-  gap: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  background: none;
-  color: var(--text-color-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.tab-btn.active {
-  color: var(--primary-color);
-  border-bottom: 2px solid var(--primary-color);
+  z-index: 1002; /* Above panel */
 }
 
 .tab-content {
   display: none;
   padding: 1rem;
   overflow-y: auto;
+  position: relative;
+  z-index: 1002; /* Above panel */
 }
 
 .tab-content.active {
   display: block;
 }
 
-/* Form Controls */
-.form-group {
-  margin-bottom: 1.5rem;
+.tab-buttons {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  z-index: 1002; /* Above panel */
 }
 
+/* Settings footer for save button */
+.settings-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  text-align: right;
+  margin-top: auto;
+  position: relative;
+  z-index: 1002; /* Above panel */
+}
+
+/* Ensure the save settings button is prominent */
+#saveSettings {
+  background-color: var(--success-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
+#saveSettings:hover {
+  background-color: var(--success-color);
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* MaterialUI Form Controls */
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: var(--text-color);
+  font-family: "Roboto", sans-serif;
 }
 
-.form-group input[type="text"],
-.form-group input[type="password"],
-.form-group select,
-.form-group textarea {
+.mui-textfield {
+  position: relative;
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  transition: all var(--transition-normal);
+  margin-bottom: 0.5rem;
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.mui-input {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-family: "Roboto", sans-serif;
+  background: var(--surface-color);
+  color: var(--text-color);
+  transition: all 0.2s ease-in-out;
+}
+
+.mui-input:hover {
+  border-color: var(--text-color);
+}
+
+.mui-input:focus {
+  outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px var(--focus-ring-color);
 }
 
-/* Buttons */
-.primary-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: var(--primary-color);
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.primary-button:hover {
-  background: var(--hover-color);
-}
-
-.icon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+.mui-select {
+  width: 100%;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  font-family: "Roboto", sans-serif;
   background: var(--surface-color);
   color: var(--text-color);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23757575'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.5rem;
+  padding-right: 2.5rem;
+  transition: all 0.2s ease-in-out;
 }
 
-.icon-button:hover {
+.mui-select:hover {
+  border-color: var(--text-color);
+}
+
+.mui-select:focus {
+  outline: none;
   border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--focus-ring-color);
+}
+
+/* Custom range input styling */
+.slider-container {
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--border-color);
+  border-radius: 1px;
+  margin: 1rem 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--hover-color);
+}
+
+/* Enhanced MaterialUI Buttons with better click feedback */
+.mui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600; /* Bolder font weight */
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-family: "Roboto", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 64px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--button-shadow); /* Add shadow to all buttons */
+}
+
+.mui-button:active {
+  transform: var(--active-button-transform);
+  transition: transform 0.1s;
+}
+
+.mui-button-contained {
+  background: var(--primary-color);
+  color: var(--button-text-color);
+  border: none;
+  box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 
+              0 6px 10px 0 rgba(0,0,0,0.14), 
+              0 1px 18px 0 rgba(0,0,0,0.12);
+}
+
+.mui-button-contained:hover {
+  background: var(--hover-color);
+  box-shadow: 0 5px 10px -3px rgba(0,0,0,0.3), 
+              0 8px 16px 2px rgba(0,0,0,0.2), 
+              0 3px 20px 5px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.mui-button-contained:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring-color), var(--button-shadow);
+}
+
+.mui-button-outlined {
+  background: transparent;
+  border: 2px solid var(--primary-color); /* Thicker border */
   color: var(--primary-color);
+  font-weight: 600;
+}
+
+.mui-button-outlined:hover {
+  background: rgba(41, 98, 255, 0.08); /* Slightly more noticeable hover */
+  border-color: var(--hover-color);
+  color: var(--hover-color);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.mui-button-outlined:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring-color);
+}
+
+.mui-button-text {
+  background: transparent;
+  border: none;
+  color: var(--primary-color);
+  padding: 0.5rem 0.75rem;
+  position: relative;
+  font-weight: 600;
+}
+
+.mui-button-text:hover {
+  background: rgba(41, 98, 255, 0.08);
+  color: var(--hover-color);
+}
+
+.mui-button-text.active {
+  color: var(--hover-color);
+  background: rgba(41, 98, 255, 0.12);
+  font-weight: 700;
+}
+
+.mui-button-text::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 3px; /* Thicker underline */
+  bottom: 0;
+  left: 50%;
+  background-color: var(--primary-color);
+  transition: all 0.3s ease-out;
+}
+
+.mui-button-text:hover::after,
+.mui-button-text.active::after {
+  width: 80%;
+  left: 10%;
+}
+
+.mui-button-icon {
+  width: 3rem;
+  height: 3rem;
+  padding: 0.5rem;
+  border-radius: 50%;
+  border: none;
+  color: var(--text-color);
+  background-color: rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.mui-button-icon:hover {
+  background: rgba(41, 98, 255, 0.15);
+  color: var(--primary-color);
+  transform: rotate(5deg) scale(1.1);
+}
+
+.mui-button-icon:active {
+  transform: var(--active-button-transform);
+}
+
+.mui-button-icon.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mui-button .material-icons {
+  font-size: 1.375rem;
+}
+
+/* Enhanced ripple effect */
+.mui-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.mui-button:focus:not(:active)::after {
+  animation: ripple 0.8s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(100, 100);
+    opacity: 0;
+  }
 }
 
 /* Message Styles */
@@ -544,11 +950,67 @@ body {
 .button-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-top: 0.75rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
   padding-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .button-row {
+    gap: 0.5rem;
+  }
+  
+  .mui-button {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+  
+  .mui-button .material-icons {
+    font-size: 1.125rem;
+  }
+}
+
+/* Export Options Menu */
+.export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-md);
+  min-width: 200px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.5rem);
+  transition: all var(--transition-normal);
+}
+
+.export-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.export-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: var(--text-color);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.export-menu-item:hover {
+  background: var(--background-color);
+}
+
+.export-menu-item .material-icons {
+  font-size: 1.25rem;
+  color: var(--text-color-secondary);
 }
 
 /* Ensure buttons take appropriate space */
@@ -564,31 +1026,72 @@ body {
   flex-shrink: 0;
 }
 
-/* Dark Mode */
+/* Dark Mode with higher contrast */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background-color: #0f172a;
-    --surface-color: #1e293b;
-    --text-color: #f1f5f9;
-    --text-color-secondary: #94a3b8;
-    --border-color: #334155;
-    --primary-color: #818cf8;
-    --hover-color: #6366f1;
-    --focus-ring-color: rgba(99, 102, 241, 0.25);
+    --background-color: #121212;
+    --surface-color: #1e1e1e;
+    --text-color: #ffffff;
+    --text-color-secondary: #b0b0b0;
+    --border-color: #404040;
+    --primary-color: #4FC3F7;   /* Brighter blue for dark mode */
+    --hover-color: #29B6F6;     /* Lighter blue hover for dark mode */
+    --focus-ring-color: rgba(79, 195, 247, 0.4);
+    --secondary-color: #0288D1;
+    --primary-color-light: #B3E5FC;
+    --button-text-color: #ffffff;
+  }
+
+  .mui-button-outlined {
+    border-color: var(--primary-color);
+    color: var(--primary-color-light);
+  }
+  
+  .mui-button-text {
+    color: var(--primary-color-light);
+  }
+  
+  .mui-button-icon {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  .mui-button-icon:hover {
+    background-color: rgba(79, 195, 247, 0.2);
+  }
+
+  .filter-chip {
+    background: rgba(79, 195, 247, 0.15);
+    border-color: var(--primary-color);
+    color: var(--primary-color-light);
   }
 
   .chat-item {
     background: var(--surface-color);
+    border: 1px solid var(--border-color);
   }
 
   .chat-item:hover {
-    background: var(--background-color);
+    background: #2c2c2c;
+    border-color: var(--primary-color);
+  }
+  
+  .chat-item.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color-light);
   }
 
+  /* Make form elements more visible in dark mode */
   .form-group input,
   .form-group select,
   .form-group textarea {
     background: var(--surface-color);
     color: var(--text-color);
+    border-color: var(--border-color);
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--primary-color);
   }
 }

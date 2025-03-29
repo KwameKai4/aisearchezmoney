@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <link href="styles.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/mui.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@mui/material@5.14.0/dist/mui.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -22,10 +25,10 @@
       </div>
       <div class="breadcrumb-right">
         <div class="mode-selector">
-          <button id="basicModeBtn" class="mode-btn">Basic</button>
-          <button id="urlModeBtn" class="mode-btn active">URL Context</button>
+          <button class="mui-button mui-button-text" id="basicModeBtn">Basic</button>
+          <button class="mui-button mui-button-contained" id="urlModeBtn">URL Context</button>
         </div>
-        <button id="settingsBtn" class="icon-button" title="Settings">
+        <button class="mui-button mui-button-icon" id="settingsBtn" title="Settings">
           <span class="material-icons">settings</span>
         </button>
       </div>
@@ -35,7 +38,7 @@
       <div class="sidebar-header">
         <h2>Chats</h2>
         <div class="button-wrapper">
-          <button id="newChatBtn" class="icon-button" title="New Chat">
+          <button class="mui-button mui-button-icon" id="newChatBtn" title="New Chat">
             <span class="material-icons">add</span>
           </button>
         </div>
@@ -48,25 +51,47 @@
     <main class="main-wrapper">
       <div id="urlContextIndicator" class="url-indicator hidden"></div>
 
-      <div class="search-container">
-        <textarea id="searchInput" class="search-input" placeholder="Ask anything..." rows="3"></textarea>
+      <div class="search-container" id="searchContainer">
+        <div class="mui-textfield">
+          <textarea id="searchInput" class="mui-input" placeholder="Ask anything..." rows="3"></textarea>
+        </div>
+        
+        <div class="search-filters">
+          <button class="filter-chip" data-filter="webpage">
+            <span class="material-icons">language</span>
+            Current Page
+          </button>
+          <button class="filter-chip" data-filter="code">
+            <span class="material-icons">code</span>
+            Code
+          </button>
+          <button class="filter-chip" data-filter="facts">
+            <span class="material-icons">fact_check</span>
+            Facts
+          </button>
+          <button class="filter-chip" data-filter="summary">
+            <span class="material-icons">summarize</span>
+            Summary
+          </button>
+        </div>
+
         <div class="button-row">
-          <button id="voiceInputBtn" class="icon-button" title="Voice Input">
+          <button class="mui-button mui-button-icon" id="voiceInputBtn" title="Voice Input">
             <span class="material-icons">mic</span>
           </button>
-          <button id="searchBtn" class="primary-button">
+          <button class="mui-button mui-button-contained" id="searchBtn">
             <span class="material-icons">search</span>
             Search
           </button>
-          <button id="analyzePageBtn" class="analysis-btn">
+          <button class="mui-button mui-button-outlined" id="analyzePageBtn">
             <span class="material-icons">article</span>
             Analyze
           </button>
-          <button id="summarizeBtn" class="analysis-btn">
+          <button class="mui-button mui-button-outlined" id="summarizeBtn">
             <span class="material-icons">summarize</span>
             Summarize
           </button>
-          <button id="keyPointsBtn" class="analysis-btn">
+          <button class="mui-button mui-button-outlined" id="keyPointsBtn">
             <span class="material-icons">format_list_bulleted</span>
             Key Points
           </button>
@@ -76,16 +101,34 @@
       <div id="resultContainer" class="result-container hidden">
         <div id="result" class="result"></div>
         <div class="result-actions">
-          <button id="copyBtn" class="icon-button" title="Copy to Clipboard">
+          <button class="mui-button mui-button-icon" id="copyBtn" title="Copy to Clipboard">
             <span class="material-icons">content_copy</span>
           </button>
-          <button id="downloadBtn" class="icon-button" title="Download">
-            <span class="material-icons">download</span>
+          <div class="export-menu" id="exportMenu">
+            <a href="#" class="export-menu-item" data-format="text">
+              <span class="material-icons">description</span>
+              Export as Text
+            </a>
+            <a href="#" class="export-menu-item" data-format="markdown">
+              <span class="material-icons">code</span>
+              Export as Markdown
+            </a>
+            <a href="#" class="export-menu-item" data-format="html">
+              <span class="material-icons">html</span>
+              Export as HTML
+            </a>
+            <a href="#" class="export-menu-item" data-format="json">
+              <span class="material-icons">data_object</span>
+              Export as JSON
+            </a>
+          </div>
+          <button class="mui-button mui-button-icon" id="exportBtn" title="Export">
+            <span class="material-icons">file_download</span>
           </button>
-          <button id="shareBtn" class="icon-button" title="Share">
+          <button class="mui-button mui-button-icon" id="shareBtn" title="Share Result">
             <span class="material-icons">share</span>
           </button>
-          <button id="resetBtn" class="icon-button" title="Reset">
+          <button class="mui-button mui-button-icon" id="resetBtn" title="Reset">
             <span class="material-icons">refresh</span>
           </button>
         </div>
@@ -105,7 +148,9 @@
       <div id="generalTab" class="tab-content active">
         <div class="form-group">
           <label for="apiKey">OpenRouter API Key</label>
-          <input type="password" id="apiKey" placeholder="Enter your API key">
+          <div class="mui-textfield">
+            <input type="password" id="apiKey" class="mui-input" placeholder="Enter your API key">
+          </div>
           <div class="input-feedback"></div>
         </div>
         <div class="form-group">
@@ -120,12 +165,14 @@
       <div id="personalityTab" class="tab-content">
         <div class="form-group">
           <label for="botName">Bot Name</label>
-          <input type="text" id="botName" placeholder="Enter bot name">
+          <div class="mui-textfield">
+            <input type="text" id="botName" class="mui-input" placeholder="Enter bot name">
+          </div>
           <div class="input-feedback"></div>
         </div>
         <div class="form-group">
           <label for="personalityPreset">Personality Preset</label>
-          <select id="personalityPreset">
+          <select id="personalityPreset" class="mui-select">
             <option value="professional">Professional</option>
             <option value="friendly">Friendly</option>
             <option value="technical">Technical</option>
@@ -134,7 +181,9 @@
         </div>
         <div class="form-group">
           <label for="customPersonality">Custom Personality Description</label>
-          <textarea id="customPersonality" placeholder="Describe the bot's personality..." rows="4"></textarea>
+          <div class="mui-textfield">
+            <textarea id="customPersonality" class="mui-input" placeholder="Describe the bot's personality..." rows="4"></textarea>
+          </div>
           <div class="input-feedback"></div>
         </div>
       </div>
@@ -142,7 +191,7 @@
       <div id="modelsTab" class="tab-content">
         <div class="form-group">
           <label for="model">Model Selection</label>
-          <select id="model">
+          <select id="model" class="mui-select">
             <option value="" disabled selected>Enter API key to see models</option>
           </select>
           <div class="input-feedback"></div>
@@ -150,7 +199,7 @@
       </div>
       
       <div class="settings-footer">
-        <button id="saveSettings" class="primary-button">
+        <button class="mui-button mui-button-contained" id="saveSettings">
           <span class="material-icons">save</span>
           Save Settings
         </button>
