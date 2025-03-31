@@ -55,18 +55,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   
+  // Settings management
+  async function loadSettings() {
+    const result = await chrome.storage.sync.get({
+      apiKey: '',
+      elevenLabsApiKey: '',
+      temperature: 0.7,
+      botName: 'AI Assistant',
+      personalityPreset: 'professional',
+      customPersonality: '',
+      model: 'gpt-3.5-turbo'
+    });
+    
+    // Populate settings fields
+    document.getElementById('apiKey').value = result.apiKey;
+    document.getElementById('elevenLabsApiKey').value = result.elevenLabsApiKey;
+    document.getElementById('temperature').value = result.temperature;
+    document.getElementById('temperatureValue').textContent = result.temperature;
+    document.getElementById('botName').value = result.botName;
+    document.getElementById('personalityPreset').value = result.personalityPreset;
+    document.getElementById('customPersonality').value = result.customPersonality;
+    document.getElementById('model').value = result.model;
+    
+    return result;
+  }
+
+  async function saveSettings() {
+    const settings = {
+      apiKey: document.getElementById('apiKey').value.trim(),
+      elevenLabsApiKey: document.getElementById('elevenLabsApiKey').value.trim(),
+      temperature: parseFloat(document.getElementById('temperature').value),
+      botName: document.getElementById('botName').value.trim(),
+      personalityPreset: document.getElementById('personalityPreset').value,
+      customPersonality: document.getElementById('customPersonality').value.trim(),
+      model: document.getElementById('model').value
+    };
+
+    try {
+      await chrome.storage.sync.set(settings);
+      showMessage('Settings saved successfully', 'success');
+      closeSettings();
+    } catch (error) {
+      showMessage('Error saving settings: ' + error.message, 'error');
+    }
+  }
+
   // Settings panel handling
   function openSettings() {
-    console.log("Opening settings panel");
     const settingsPanel = document.getElementById('settingsPanel');
     if (settingsPanel) {
-      settingsPanel.classList.remove('hidden');
-      settingsPanel.classList.add('show');
+      loadSettings().then(() => {
+        settingsPanel.classList.remove('hidden');
+        settingsPanel.classList.add('show');
+      });
     }
   }
 
   function closeSettings() {
-    console.log("Closing settings panel");
     const settingsPanel = document.getElementById('settingsPanel');
     if (settingsPanel) {
       settingsPanel.classList.remove('show');
@@ -75,7 +120,135 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 300);
     }
   }
+
+  // Handle tab switching in settings
+  document.querySelectorAll('.tab-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      // Remove active class from all tabs and buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      
+      // Add active class to clicked button and corresponding tab
+      button.classList.add('active');
+      const tabId = button.getAttribute('data-tab');
+      document.getElementById(tabId + 'Tab').classList.add('active');
+    });
+  });
+
+  // Temperature slider handling
+  document.getElementById('temperature')?.addEventListener('input', function(e) {
+    document.getElementById('temperatureValue').textContent = e.target.value;
+  });
+
+  // Personality preset handling
+  document.getElementById('personalityPreset')?.addEventListener('change', function(e) {
+    const customField = document.getElementById('customPersonality');
+    if (customField) {
+      customField.disabled = e.target.value !== 'custom';
+    }
+  });
+
+  // Model selection handling
+  async function updateAvailableModels() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const modelSelect = document.getElementById('model');
+    
+    if (!apiKey) {
+      modelSelect.innerHTML = '<option value="" disabled selected>Enter API key to see models</option>';
+      return;
+    }
+
+    try {
+      const response = await fetch('https://api.openrouter.ai/api/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch models');
+      
+      const models = await response.json();
+      modelSelect.innerHTML = models.map(model => 
+        `<option value="${model.id}">${model.name}</option>`
+      ).join('');
+      
+    } catch (error) {
+      showMessage('Error fetching models: ' + error.message, 'error');
+      modelSelect.innerHTML = '<option value="" disabled selected>Error loading models</option>';
+    }
+  }
+
+  // API key validation
+  async function validateApiKey(key) {
+    try {
+      const response = await fetch('https://api.openrouter.ai/api/v1/auth/test', {
+        headers: {
+          'Authorization': `Bearer ${key}`
+        }
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  // Handle API key input
+  document.getElementById('apiKey')?.addEventListener('change', async function(e) {
+    const key = e.target.value.trim();
+    const feedback = e.target.parentElement.querySelector('.input-feedback');
+    
+    if (!key) {
+      feedback.textContent = 'API key is required';
+      feedback.style.color = 'var(--error-color)';
+      return;
+    }
+
+    feedback.textContent = 'Validating...';
+    const isValid = await validateApiKey(key);
+    
+    if (isValid) {
+      feedback.textContent = 'API key is valid';
+      feedback.style.color = 'var(--success-color)';
+      updateAvailableModels();
+    } else {
+      feedback.textContent = 'Invalid API key';
+      feedback.style.color = 'var(--error-color)';
+    }
+  });
   
+  // Chat management
+  async function loadChats() {
+    const { chats = [] } = await chrome.storage.sync.get({ chats: [] });
+    return chats.map(chat => Chat.fromJSON(chat));
+  }
+
+  async function saveChats(chats) {
+    await chrome.storage.sync.set({ chats });
+  }
+
+  async function createNewChat() {
+    const chat = new Chat();
+    const chats = await loadChats();
+    chats.unshift(chat);
+    await saveChats(chats);
+    await switchChat(chat.id);
+    renderChatList();
+    return chat;
+  }
+
+  async function switchChat(chatId) {
+    const chats = await loadChats();
+    currentChat = chats.find(c => c.id === chatId);
+    if (!currentChat) {
+      showMessage('Chat not found', 'error');
+      return;
+    }
+    
+    // Update UI
+    document.getElementById('currentContext').textContent = currentChat.title;
+    renderChatMessages();
+  }
+
   // Delete chat handler
   async function deleteChat(chatId) {
     showConfirmDialog('Are you sure you want to delete this chat?', async () => {
@@ -97,9 +270,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   
+  function renderChatMessages() {
+    if (!currentChat) return;
+
+    const result = document.getElementById('result');
+    result.innerHTML = currentChat.messages.map(msg => `
+      <div class="message ${msg.role}">
+        <div class="message-content">${msg.content}</div>
+      </div>
+    `).join('');
+    
+    document.getElementById('resultContainer').classList.remove('hidden');
+  }
+  
   // Function to handle chat list rendering
-  function renderChatList() {
-    console.log('Chat list rendering would happen here');
+  async function renderChatList() {
+    const chatList = document.getElementById('chatList');
+    const chats = await loadChats();
+    
+    chatList.innerHTML = chats.map(chat => `
+      <div class="chat-item ${chat.id === currentChat?.id ? 'active' : ''}" data-chat-id="${chat.id}">
+        <div class="chat-title">${chat.title}</div>
+        <button class="mui-button mui-button-icon chat-delete-btn" title="Delete Chat">
+          <span class="material-icons">delete</span>
+        </button>
+      </div>
+    `).join('');
+
+    // Add click handlers
+    chatList.querySelectorAll('.chat-item').forEach(item => {
+      const chatId = item.dataset.chatId;
+      
+      // Title click handler for switching chats
+      item.querySelector('.chat-title').addEventListener('click', () => {
+        switchChat(chatId);
+      });
+      
+      // Delete button handler
+      item.querySelector('.chat-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteChat(chatId);
+      });
+    });
   }
   
   // Direct button event handlers to ensure they're clickable
@@ -224,10 +436,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  document.getElementById('newChatBtn')?.addEventListener('click', function(e) {
+  document.getElementById('newChatBtn')?.addEventListener('click', async function(e) {
     e.preventDefault();
-    console.log('New chat button clicked');
     showMessage('Creating new chat...', 'info');
+    await createNewChat();
+    showMessage('New chat created', 'success');
   });
   
   document.getElementById('copyBtn')?.addEventListener('click', function(e) {
@@ -245,7 +458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  document.getElementById('speakBtn')?.addEventListener('click', function(e) {
+  document.getElementById('speakBtn')?.addEventListener('click', async function(e) {
     e.preventDefault();
     console.log('Speak button clicked');
     
@@ -255,16 +468,63 @@ document.addEventListener('DOMContentLoaded', async () => {
       audioPlayer = null;
       this.innerHTML = '<span class="material-icons">volume_up</span>';
       showMessage('Audio playback stopped', 'info');
-    } else {
-      // Get current response text
-      const resultElement = document.getElementById('result');
-      if (resultElement && resultElement.textContent) {
-        currentResponse = resultElement.textContent;
-        showMessage('Starting text-to-speech...', 'info');
-        // Actual TTS functionality would be implemented here
-      } else {
-        showMessage('No content to speak', 'warning');
-      }
+      return;
+    }
+
+    // Get current response text
+    const resultElement = document.getElementById('result');
+    if (!resultElement?.textContent) {
+      showMessage('No content to speak', 'warning');
+      return;
+    }
+
+    // Get ElevenLabs API key from settings
+    const { elevenLabsApiKey } = await chrome.storage.sync.get(['elevenLabsApiKey']);
+    if (!elevenLabsApiKey) {
+      showMessage('ElevenLabs API key is required for text-to-speech', 'error');
+      return;
+    }
+
+    try {
+      showMessage('Generating audio...', 'info');
+      this.innerHTML = '<span class="material-icons rotating">sync</span>';
+
+      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenLabsApiKey
+        },
+        body: JSON.stringify({
+          text: resultElement.textContent,
+          model_id: 'eleven_monolingual_v1',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('TTS request failed');
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      audioPlayer = new Audio(audioUrl);
+      audioPlayer.onended = () => {
+        this.innerHTML = '<span class="material-icons">volume_up</span>';
+        audioPlayer = null;
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      await audioPlayer.play();
+      this.innerHTML = '<span class="material-icons">stop</span>';
+      showMessage('Audio playback started', 'success');
+      
+    } catch (error) {
+      console.error('TTS error:', error);
+      this.innerHTML = '<span class="material-icons">volume_up</span>';
+      showMessage('Text-to-speech failed: ' + error.message, 'error');
     }
   });
   
@@ -286,14 +546,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  document.getElementById('saveSettings')?.addEventListener('click', function(e) {
+  document.getElementById('saveSettings')?.addEventListener('click', async function(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Save settings button clicked');
     
-    // In a real implementation, would save to chrome.storage.sync
-    showMessage('Settings saved successfully', 'success');
-    closeSettings();
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) {
+      showMessage('API key is required', 'error');
+      return;
+    }
+
+    const isValid = await validateApiKey(apiKey);
+    if (!isValid) {
+      showMessage('Invalid API key', 'error');
+      return;
+    }
+
+    await saveSettings();
   });
   
   // Prevent clicks within settings panel from closing it
