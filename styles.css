@@ -110,6 +110,7 @@ body {
   left: 0;
   background: var(--surface-color);
   overflow: hidden;
+  pointer-events: auto;
 }
 
 /* Ensure all scrollable areas have proper containment */
@@ -137,6 +138,7 @@ body {
 .main-wrapper {
   height: calc(var(--popup-height) - var(--header-height));
   overflow-y: auto;
+  pointer-events: auto;
 }
 
 /* Breadcrumb */
@@ -356,6 +358,7 @@ body {
   top: 0;
   z-index: 10;
   transition: box-shadow var(--transition-normal);
+  pointer-events: auto;
 }
 
 .search-container.scrolled {
@@ -537,7 +540,8 @@ body {
   transition: all 0.3s ease;
   position: sticky;
   bottom: 0;
-  z-index: 2;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 /* Loading State */
@@ -573,6 +577,34 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Animation for loading spinner */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating {
+  animation: rotate 1.5s linear infinite;
+  display: inline-block;
+}
+
+/* Text-to-speech button active state */
+#speakBtn.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Audio player container */
+.audio-player {
+  margin-top: 0.5rem;
+  width: 100%;
+  display: none;
+}
+
+.audio-player.visible {
+  display: block;
 }
 
 /* Settings Panel with fixed z-index and overlay issues */
@@ -799,6 +831,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   position: relative;
   overflow: hidden;
   box-shadow: var(--button-shadow); /* Add shadow to all buttons */
+  z-index: 1; /* Ensure buttons have a z-index */
+  pointer-events: auto; /* Explicitly enable pointer events */
 }
 
 .mui-button:active {
@@ -892,6 +926,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: var(--text-color);
   background-color: rgba(0, 0, 0, 0.04);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .mui-button-icon:hover {
@@ -999,6 +1036,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
   margin-top: 0.5rem; /* Less margin */
   flex-wrap: wrap;
   padding-bottom: 0.5rem;
+  position: relative;
+  z-index: 2; /* Ensure button row is above other elements */
 }
 
 .button-row .mui-button {

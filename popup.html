@@ -85,6 +85,9 @@
           <button class="mui-button mui-button-icon" id="copyBtn" title="Copy to Clipboard">
             <span class="material-icons">content_copy</span>
           </button>
+          <button class="mui-button mui-button-icon" id="speakBtn" title="Text-to-Speech">
+            <span class="material-icons">volume_up</span>
+          </button>
           <div class="export-menu" id="exportMenu">
             <a href="#" class="export-menu-item" data-format="text">
               <span class="material-icons">description</span>
@@ -133,6 +136,14 @@
             <input type="password" id="apiKey" class="mui-input" placeholder="Enter your API key">
           </div>
           <div class="input-feedback"></div>
+        </div>
+        <div class="form-group">
+          <label for="elevenLabsApiKey">ElevenLabs API Key</label>
+          <div class="mui-textfield">
+            <input type="password" id="elevenLabsApiKey" class="mui-input" placeholder="Enter your ElevenLabs API key">
+          </div>
+          <div class="input-feedback"></div>
+          <small class="settings-hint">Required for text-to-speech functionality</small>
         </div>
         <div class="form-group">
           <label for="temperature">Response Creativity</label>
