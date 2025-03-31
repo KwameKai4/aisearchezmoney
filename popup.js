@@ -75,7 +75,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('botName').value = result.botName;
     document.getElementById('personalityPreset').value = result.personalityPreset;
     document.getElementById('customPersonality').value = result.customPersonality;
-    document.getElementById('model').value = result.model;
+    
+    // Ensure model select has a value
+    const modelSelect = document.getElementById('model');
+    if (modelSelect && result.apiKey) {
+      // If we have models loaded, set the value
+      if (modelSelect.options.length > 0) {
+        modelSelect.value = result.model;
+      }
+    }
     
     return result;
   }
@@ -88,15 +96,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       botName: document.getElementById('botName').value.trim(),
       personalityPreset: document.getElementById('personalityPreset').value,
       customPersonality: document.getElementById('customPersonality').value.trim(),
-      model: document.getElementById('model').value
+      model: document.getElementById('model').value || 'gpt-3.5-turbo' // Ensure we always have a model value
     };
+
+    console.log('Saving settings with model:', settings.model);
 
     try {
       await chrome.storage.sync.set(settings);
       showMessage('Settings saved successfully', 'success');
       closeSettings();
+      return true;
     } catch (error) {
       showMessage('Error saving settings: ' + error.message, 'error');
+      return false;
     }
   }
 
@@ -170,6 +182,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${model.name} (${model.provider})
         </option>`
       ).join('');
+      
+      // Select the saved model if available
+      chrome.storage.sync.get(['model'], (result) => {
+        if (result.model) {
+          // Try to find the saved model in the options
+          const options = Array.from(modelSelect.options);
+          const matchingOption = options.find(option => option.value === result.model);
+          if (matchingOption) {
+            modelSelect.value = result.model;
+          } else if (options.length > 0) {
+            // If saved model not found, select the first one
+            modelSelect.selectedIndex = 0;
+          }
+        }
+      });
     } catch (error) {
       showMessage('Error loading models: ' + error.message, 'error');
       modelSelect.innerHTML = '<option value="" disabled selected>Error loading models</option>';
@@ -620,6 +647,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const modelSelect = document.getElementById('model');
+    if (modelSelect && !modelSelect.value) {
+      showMessage('Please select a model', 'warning');
+      return;
+    }
+
     // Show loading state
     const saveBtn = this;
     const originalContent = saveBtn.innerHTML;
@@ -631,6 +664,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const isApiKeyValid = await validateApiKey(apiKey);
       if (!isApiKeyValid) {
         showMessage('Invalid OpenRouter API key', 'error');
+        saveBtn.innerHTML = originalContent;
+        saveBtn.disabled = false;
         return;
       }
       
@@ -640,13 +675,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isElevenLabsKeyValid = await validateElevenLabsApiKey(elevenLabsApiKey);
         if (!isElevenLabsKeyValid) {
           showMessage('Invalid ElevenLabs API key', 'error');
+          saveBtn.innerHTML = originalContent;
+          saveBtn.disabled = false;
           return;
         }
       }
 
-      await saveSettings();
-      updateAvailableModels(); // Update models list after successful save
-      showMessage('Settings saved successfully', 'success');
+      const success = await saveSettings();
+      if (success) {
+        showMessage('Settings saved successfully', 'success');
+      }
     } catch (error) {
       showMessage('Error saving settings: ' + error.message, 'error');
     } finally {
