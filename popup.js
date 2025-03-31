@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log("DOM fully loaded and parsed");
   
   // Global variables
-  let isUseUrlContext = true;
+  let isUseUrlContext = true; // Default to URL context mode
   let currentChat = null;
   let currentResponse = null;
   let audioPlayer = null;
@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       botName: 'AI Assistant',
       personalityPreset: 'professional',
       customPersonality: '',
-      model: 'gpt-3.5-turbo'
+      model: 'gpt-3.5-turbo',
+      isUseUrlContext: true // Add setting for URL context mode
     });
     
     // Populate settings fields
@@ -85,6 +86,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
     
+    // Set URL context mode
+    isUseUrlContext = result.isUseUrlContext;
+    updateUrlContextUI();
+    
     return result;
   }
 
@@ -96,7 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       botName: document.getElementById('botName').value.trim(),
       personalityPreset: document.getElementById('personalityPreset').value,
       customPersonality: document.getElementById('customPersonality').value.trim(),
-      model: document.getElementById('model').value || 'gpt-3.5-turbo' // Ensure we always have a model value
+      model: document.getElementById('model').value || 'gpt-3.5-turbo', // Ensure we always have a model value
+      isUseUrlContext: isUseUrlContext // Save URL context setting
     };
 
     console.log('Saving settings with model:', settings.model);
@@ -163,6 +169,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (customField) {
       customField.disabled = e.target.value !== 'custom';
     }
+  });
+
+  // URL Context Mode handling
+  function updateUrlContextUI() {
+    const basicModeBtn = document.getElementById('basicModeBtn');
+    const urlModeBtn = document.getElementById('urlModeBtn');
+    const urlContextIndicator = document.getElementById('urlContextIndicator');
+    
+    if (isUseUrlContext) {
+      basicModeBtn.classList.remove('mui-button-contained');
+      basicModeBtn.classList.add('mui-button-text');
+      urlModeBtn.classList.remove('mui-button-text');
+      urlModeBtn.classList.add('mui-button-contained');
+      
+      // Show URL indicator and get current URL
+      chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+        if (tabs && tabs.length > 0) {
+          const currentUrl = tabs[0].url;
+          urlContextIndicator.textContent = `Context: ${currentUrl}`;
+          urlContextIndicator.classList.remove('hidden');
+        }
+      });
+    } else {
+      urlModeBtn.classList.remove('mui-button-contained');
+      urlModeBtn.classList.add('mui-button-text');
+      basicModeBtn.classList.remove('mui-button-text');
+      basicModeBtn.classList.add('mui-button-contained');
+      
+      // Hide URL indicator
+      urlContextIndicator.classList.add('hidden');
+    }
+  }
+  
+  // URL context mode button handlers
+  document.getElementById('basicModeBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    isUseUrlContext = false;
+    updateUrlContextUI();
+    showMessage('Basic mode activated', 'info');
+    // Save the preference
+    chrome.storage.sync.set({ isUseUrlContext: false });
+  });
+  
+  document.getElementById('urlModeBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    isUseUrlContext = true;
+    updateUrlContextUI();
+    showMessage('URL context mode activated', 'info');
+    // Save the preference
+    chrome.storage.sync.set({ isUseUrlContext: true });
   });
 
   // Model selection handling
@@ -420,9 +476,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       resultContainer?.classList.remove('hidden');
       result.textContent = 'Searching...';
       
+      // Send message with URL context flag
       const response = await chrome.runtime.sendMessage({
         action: 'search',
-        query: query
+        query: query,
+        useUrlContext: isUseUrlContext
       });
       
       if (response && response.data) {
@@ -441,6 +499,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     const resultContainer = document.getElementById('resultContainer');
     const result = document.getElementById('result');
+    
+    // Always use URL context for analyze
+    if (!isUseUrlContext) {
+      showMessage('Switching to URL context mode for page analysis', 'info');
+      isUseUrlContext = true;
+      updateUrlContextUI();
+    }
     
     try {
       resultContainer?.classList.remove('hidden');
@@ -467,6 +532,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultContainer = document.getElementById('resultContainer');
     const result = document.getElementById('result');
     
+    // Always use URL context for summarize
+    if (!isUseUrlContext) {
+      showMessage('Switching to URL context mode for summarization', 'info');
+      isUseUrlContext = true;
+      updateUrlContextUI();
+    }
+    
     try {
       resultContainer?.classList.remove('hidden');
       result.textContent = 'Generating summary...';
@@ -491,6 +563,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
     const resultContainer = document.getElementById('resultContainer');
     const result = document.getElementById('result');
+    
+    // Always use URL context for key points
+    if (!isUseUrlContext) {
+      showMessage('Switching to URL context mode for key points extraction', 'info');
+      isUseUrlContext = true;
+      updateUrlContextUI();
+    }
     
     try {
       resultContainer?.classList.remove('hidden');
@@ -719,8 +798,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     button.style.zIndex = '5';  // Ensure button is above other elements
   });
   
-  // Initialize chat list
+  // Initialize chat list and URL context UI
   renderChatList();
+  
+  // Load settings and update UI based on saved preferences
+  loadSettings();
   
   console.log("Initialization complete - all event listeners attached");
 });
