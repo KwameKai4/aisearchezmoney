@@ -134,16 +134,17 @@
           <label for="apiKey">OpenRouter API Key</label>
           <div class="mui-textfield">
             <input type="password" id="apiKey" class="mui-input" placeholder="Enter your API key">
+            <div class="input-feedback" id="apiKeyFeedback"></div>
           </div>
-          <div class="input-feedback"></div>
+          <small class="settings-hint">Required for AI functionality. Get your key at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></small>
         </div>
         <div class="form-group">
           <label for="elevenLabsApiKey">ElevenLabs API Key</label>
           <div class="mui-textfield">
             <input type="password" id="elevenLabsApiKey" class="mui-input" placeholder="Enter your ElevenLabs API key">
+            <div class="input-feedback" id="elevenLabsKeyFeedback"></div>
           </div>
-          <div class="input-feedback"></div>
-          <small class="settings-hint">Required for text-to-speech functionality</small>
+          <small class="settings-hint">Required for text-to-speech functionality. Get your key at <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a></small>
         </div>
         <div class="form-group">
           <label for="temperature">Response Creativity</label>

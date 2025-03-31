@@ -180,11 +180,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function validateApiKey(key) {
     try {
       // Test the API key with a minimal request
-      const response = await fetch('https://api.openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'HTTP-Referer': API_CONFIG.openRouter.referer || window.location.origin,
+          'X-Title': API_CONFIG.app.name || 'AI Search Assistant'
         },
         body: JSON.stringify({
           model: "mistralai/mistral-7b-instruct:free",
@@ -194,13 +196,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error?.message || 'Invalid API key');
+        const data = await response.json().catch(() => ({}));
+        console.error('API validation error:', data);
+        throw new Error(data.error?.message || 'Invalid API key or network error');
       }
       
       return true;
     } catch (error) {
       console.error('API key validation error:', error);
+      return false;
+    }
+  }
+
+  // Validate ElevenLabs API key
+  async function validateElevenLabsApiKey(key) {
+    try {
+      const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+        method: 'GET',
+        headers: {
+          'xi-api-key': key
+        }
+      });
+      
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || 'Invalid ElevenLabs API key');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('ElevenLabs API key validation error:', error);
       return false;
     }
   }
@@ -225,6 +250,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateAvailableModels();
     } else {
       feedback.textContent = 'Invalid API key';
+      feedback.style.color = 'var(--error-color)';
+    }
+  });
+
+  // Handle ElevenLabs API key input
+  document.getElementById('elevenLabsApiKey')?.addEventListener('change', async function(e) {
+    const key = e.target.value.trim();
+    const feedback = e.target.parentElement.querySelector('.input-feedback');
+    
+    if (!key) {
+      feedback.textContent = 'ElevenLabs API key is optional';
+      feedback.style.color = 'var(--text-color-secondary)';
+      return;
+    }
+
+    feedback.textContent = 'Validating...';
+    const isValid = await validateElevenLabsApiKey(key);
+    
+    if (isValid) {
+      feedback.textContent = 'ElevenLabs API key is valid';
+      feedback.style.color = 'var(--success-color)';
+    } else {
+      feedback.textContent = 'Invalid ElevenLabs API key';
       feedback.style.color = 'var(--error-color)';
     }
   });
@@ -494,7 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get ElevenLabs API key from settings
     const { elevenLabsApiKey } = await chrome.storage.sync.get(['elevenLabsApiKey']);
     if (!elevenLabsApiKey) {
-      showMessage('ElevenLabs API key is required for text-to-speech', 'error');
+      showMessage('ElevenLabs API key is required for text-to-speech. Please add it in settings.', 'error');
       return;
     }
 
@@ -509,7 +557,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           'xi-api-key': elevenLabsApiKey
         },
         body: JSON.stringify({
-          text: resultElement.textContent,
+          text: resultElement.textContent.substring(0, 5000), // Limit text length to avoid errors
           model_id: 'eleven_monolingual_v1',
           voice_settings: {
             stability: 0.5,
@@ -518,7 +566,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
       });
 
-      if (!response.ok) throw new Error('TTS request failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'TTS request failed');
+      }
 
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -576,14 +627,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveBtn.disabled = true;
 
     try {
-      const isValid = await validateApiKey(apiKey);
-      if (!isValid) {
-        showMessage('Invalid API key', 'error');
+      // Validate OpenRouter API key
+      const isApiKeyValid = await validateApiKey(apiKey);
+      if (!isApiKeyValid) {
+        showMessage('Invalid OpenRouter API key', 'error');
         return;
+      }
+      
+      // Validate ElevenLabs API key if provided
+      const elevenLabsApiKey = document.getElementById('elevenLabsApiKey').value.trim();
+      if (elevenLabsApiKey) {
+        const isElevenLabsKeyValid = await validateElevenLabsApiKey(elevenLabsApiKey);
+        if (!isElevenLabsKeyValid) {
+          showMessage('Invalid ElevenLabs API key', 'error');
+          return;
+        }
       }
 
       await saveSettings();
       updateAvailableModels(); // Update models list after successful save
+      showMessage('Settings saved successfully', 'success');
+    } catch (error) {
+      showMessage('Error saving settings: ' + error.message, 'error');
     } finally {
       // Restore button state
       saveBtn.innerHTML = originalContent;
