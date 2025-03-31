@@ -485,9 +485,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       if (response && response.data) {
         result.textContent = response.data;
+        
+        // Add this message to current chat if we have one
+        if (currentChat) {
+          currentChat.addMessage('user', query);
+          currentChat.addMessage('assistant', response.data);
+          await saveChats(await loadChats());
+        }
+        
         showMessage('Search completed successfully', 'success');
       } else {
-        throw new Error('No response data');
+        throw new Error(response.error || 'No response data');
       }
     } catch (err) {
       result.textContent = 'Search failed. Please try again.';

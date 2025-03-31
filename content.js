@@ -36,6 +36,61 @@ function extractKeyPointsFromText(text) {
     .slice(0, 5); // Limit to top 5 key points
 }
 
+// Function to perform basic search without URL context
+async function performBasicSearch(query) {
+  try {
+    // Use OpenAI API for search with query only
+    const { apiKey, model } = await chrome.storage.sync.get(['apiKey', 'model']);
+    
+    if (!apiKey) {
+      return {
+        data: 'Error: OpenRouter API key is required. Please add it in settings.',
+        success: false
+      };
+    }
+    
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'AI Search Assistant'
+      },
+      body: JSON.stringify({
+        model: model || 'mistralai/mistral-7b-instruct:free',
+        messages: [
+          { 
+            role: "user", 
+            content: `Please answer the following question as accurately as possible: ${query}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'OpenRouter API request failed');
+    }
+    
+    const result = await response.json();
+    const answer = result.choices[0].message.content;
+    
+    return {
+      data: answer,
+      success: true
+    };
+  } catch (error) {
+    console.error('Basic search error:', error);
+    return {
+      error: error.message,
+      success: false
+    };
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try {
     switch (message.action) {
@@ -80,18 +135,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         break;
 
       case 'search':
-        const searchText = extractPageText();
-        const query = message.query.toLowerCase();
-        const matches = searchText
-          .split('\n')
-          .filter(line => line.toLowerCase().includes(query))
-          .slice(0, 5);
-        sendResponse({
-          data: matches.length 
-            ? 'Search Results:\n\n' + matches.join('\n\n')
-            : 'No matches found for: ' + message.query,
-          success: true
-        });
+        // Check if we should use URL context or basic search
+        if (message.useUrlContext) {
+          // URL context search in the current page
+          const searchText = extractPageText();
+          const query = message.query.toLowerCase();
+          const matches = searchText
+            .split('\n')
+            .filter(line => line.toLowerCase().includes(query))
+            .slice(0, 5);
+          
+          sendResponse({
+            data: matches.length 
+              ? 'Search Results from Current Page:\n\n' + matches.join('\n\n')
+              : 'No matches found on this page for: ' + message.query,
+            success: true
+          });
+        } else {
+          // Basic search without URL context
+          performBasicSearch(message.query).then(response => {
+            sendResponse(response);
+          }).catch(error => {
+            sendResponse({
+              error: error.message,
+              success: false
+            });
+          });
+          return true; // Signal that we will send the response asynchronously
+        }
         break;
 
       default:
