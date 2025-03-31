@@ -105,6 +105,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settingsPanel = document.getElementById('settingsPanel');
     if (settingsPanel) {
       loadSettings().then(() => {
+        // Get API key to check if we should load models
+        const apiKey = document.getElementById('apiKey').value.trim();
+        if (apiKey) {
+          updateAvailableModels();
+        }
         settingsPanel.classList.remove('hidden');
         settingsPanel.classList.add('show');
       });
@@ -149,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Model selection handling
-  async function updateAvailableModels() {
+  function updateAvailableModels() {
     const apiKey = document.getElementById('apiKey').value.trim();
     const modelSelect = document.getElementById('model');
     
@@ -159,21 +164,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const response = await fetch('https://api.openrouter.ai/api/v1/models', {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch models');
-      
-      const models = await response.json();
-      modelSelect.innerHTML = models.map(model => 
-        `<option value="${model.id}">${model.name}</option>`
+      // Use imported models from models.js
+      modelSelect.innerHTML = AVAILABLE_MODELS.map(model => 
+        `<option value="${model.id}" title="${model.description}">
+          ${model.name} (${model.provider})
+        </option>`
       ).join('');
-      
     } catch (error) {
-      showMessage('Error fetching models: ' + error.message, 'error');
+      showMessage('Error loading models: ' + error.message, 'error');
       modelSelect.innerHTML = '<option value="" disabled selected>Error loading models</option>';
     }
   }
@@ -181,13 +179,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   // API key validation
   async function validateApiKey(key) {
     try {
-      const response = await fetch('https://api.openrouter.ai/api/v1/auth/test', {
+      // Test the API key with a minimal request
+      const response = await fetch('https://api.openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${key}`
-        }
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: "mistralai/mistral-7b-instruct:free",
+          messages: [{ role: "user", content: "Hello" }],
+          max_tokens: 1  // Minimal response to just test API key
+        })
       });
-      return response.ok;
-    } catch {
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error?.message || 'Invalid API key');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('API key validation error:', error);
       return false;
     }
   }
@@ -556,13 +569,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const isValid = await validateApiKey(apiKey);
-    if (!isValid) {
-      showMessage('Invalid API key', 'error');
-      return;
-    }
+    // Show loading state
+    const saveBtn = this;
+    const originalContent = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="material-icons rotating">sync</span> Validating...';
+    saveBtn.disabled = true;
 
-    await saveSettings();
+    try {
+      const isValid = await validateApiKey(apiKey);
+      if (!isValid) {
+        showMessage('Invalid API key', 'error');
+        return;
+      }
+
+      await saveSettings();
+      updateAvailableModels(); // Update models list after successful save
+    } finally {
+      // Restore button state
+      saveBtn.innerHTML = originalContent;
+      saveBtn.disabled = false;
+    }
   });
   
   // Prevent clicks within settings panel from closing it
